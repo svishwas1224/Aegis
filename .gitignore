@@ -8,6 +8,10 @@ __pycache__/
 
 # Ignore Environment Variables (CRITICAL)
 .env
+.env.local
+.env.production
+.env.development
+*.env
 
 # Ignore Local Databases & Backups (CRITICAL)
 user_backups.csv
