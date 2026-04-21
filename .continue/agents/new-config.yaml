@@ -1,0 +1,11 @@
+{
+  "models":
+    [
+      {
+        "title": "Fast Coding",
+        "provider": "ollama",
+        "model": "qwen2.5-coder:7b",
+      },
+      { "title": "Deep Reasoning", "provider": "ollama", "model": "llama3:8b" },
+    ],
+}

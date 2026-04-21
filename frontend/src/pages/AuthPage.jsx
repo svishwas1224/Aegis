@@ -1,22 +1,38 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation, useNavigate, Link } from 'react-router-dom';
 import './Auth.css';
 import axios from 'axios';
 import Cookies from 'js-cookie';
 import API_BASE_URL from '../config';
+import { Eye, EyeOff } from 'lucide-react';
 
 // Ensure cookies are sent with every request
 axios.defaults.withCredentials = true;
 
 const AuthPage = () => {
-    const [isRightPanelActive, setIsRightPanelActive] = useState(false);
+    const location = useLocation();
+    const isSignupUrl = location.pathname.includes('signup');
+
+    const initialIsMobile = window.innerWidth <= 1024;
+    const [isRightPanelActive, setIsRightPanelActive] = useState(isSignupUrl);
     const [forgotFlow, setForgotFlow] = useState(false);
     const [forgotPhase, setForgotPhase] = useState('email'); // 'email', 'otp', or 'new_pass'
     const [otpTimer, setOtpTimer] = useState(120);
     const [isSubmitting, setIsSubmitting] = useState(false);
     
     // Mobile Flow States
-    const [isMobile, setIsMobile] = useState(window.innerWidth <= 1024);
-    const [mobileScreen, setMobileScreen] = useState('intro'); // 'intro', 'login', 'signup'
+    const [isMobile, setIsMobile] = useState(initialIsMobile);
+    const [mobileScreen, setMobileScreen] = useState(isSignupUrl ? 'signup' : (location.pathname === '/login' ? 'login' : 'intro'));
+
+    // Update state when location changes (in case of navigation between login/signup)
+    useEffect(() => {
+        setIsRightPanelActive(isSignupUrl);
+        if (isSignupUrl) {
+            setMobileScreen('signup');
+        } else if (location.pathname === '/login') {
+            setMobileScreen('login');
+        }
+    }, [isSignupUrl, location.pathname]);
 
     // Auth Form States
     const [loginData, setLoginData] = useState({ email: '', password: '' });
@@ -25,22 +41,12 @@ const AuthPage = () => {
 
     const [error, setError] = useState('');
     const [showPassword, setShowPassword] = useState({ login: false, signup: false, confirm: false, reset: false });
-    const [windowFocused, setWindowFocused] = useState(true);
 
-    // Track window focus for Anti-Screenshot protection & generic resize
+    // Track window focus for generic resize
     useEffect(() => {
-        const handleFocus = () => setWindowFocused(true);
-        const handleBlur = () => setWindowFocused(false);
         const handleResize = () => setIsMobile(window.innerWidth <= 1024);
-        
-        window.addEventListener('focus', handleFocus);
-        window.addEventListener('blur', handleBlur);
         window.addEventListener('resize', handleResize);
-        return () => {
-            window.removeEventListener('focus', handleFocus);
-            window.removeEventListener('blur', handleBlur);
-            window.removeEventListener('resize', handleResize);
-        };
+        return () => window.removeEventListener('resize', handleResize);
     }, []);
 
     // Check if already logged in on mount
@@ -73,6 +79,8 @@ const AuthPage = () => {
         return () => clearInterval(interval);
     }, [forgotPhase, otpTimer]);
 
+    const navigate = useNavigate();
+
     const togglePassword = (field) => {
         setShowPassword(prev => ({ ...prev, [field]: !prev[field] }));
     };
@@ -81,6 +89,7 @@ const AuthPage = () => {
         setIsRightPanelActive(active);
         setMobileScreen(active ? 'signup' : 'login');
         setError('');
+        navigate(active ? '/signup' : '/login');
     };
 
     const handleLogin = async (e) => {
@@ -189,6 +198,7 @@ const AuthPage = () => {
             <div className="bg-canvas">
                 <div className="orb orb-1"></div>
                 <div className="orb orb-2"></div>
+                <div className="orb orb-3"></div>
             </div>
 
             {/* Mobile Intro Screen (Reference Pic Flow) */}
@@ -205,7 +215,7 @@ const AuthPage = () => {
                 </div>
             )}
 
-            <div className={`auth-card ${isRightPanelActive ? 'right-panel-active' : ''}`} id="authCard" style={{ display: (isMobile && mobileScreen === 'intro') ? 'none' : 'block' }}>
+            <div className="auth-content-container" style={{ display: (isMobile && mobileScreen === 'intro') ? 'none' : 'flex' }}>
                 
                 {/* Mobile Back Button */}
                 {isMobile && mobileScreen !== 'intro' && (
@@ -215,126 +225,141 @@ const AuthPage = () => {
                 )}
 
                 {/* Signup Form */}
-                <div className="form-container sign-up-container" style={{ display: isMobile && mobileScreen !== 'signup' ? 'none' : 'block' }}>
-                    <form onSubmit={handleSignup}>
-                        <h2 className="form-title">{isMobile ? "Hello! Register to get started" : "Create Account"}</h2>
-                        {error && <div className="error-msg error-visible">{error}</div>}
-                        <div className="field-group">
-                            <input type="text" placeholder={isMobile ? "Enter your username" : " "} required value={signupData.username} onChange={e => setSignupData({ ...signupData, username: e.target.value })} />
-                            <label>Username</label>
-                            <div className="bar"></div>
-                        </div>
-                        <div className="field-group">
-                            <input
-                                type="email"
-                                name="email"
-                                autoComplete="email"
-                                placeholder={isMobile ? "Enter your email" : " "} required
-                                value={signupData.email}
-                                onChange={e => setSignupData({ ...signupData, email: e.target.value })}
-                            />
-                            <label>Email Address</label>
-                            <div className="bar"></div>
-                        </div>
-                        <div className="field-group">
-                            <input
-                                type={showPassword.signup ? "text" : "password"}
-                                name="signup-password"
-                                autoComplete="new-password"
-                                placeholder={isMobile ? "Enter your password" : " "} required
-                                value={signupData.password}
-                                onChange={e => setSignupData({ ...signupData, password: e.target.value })}
-                            />
-                            <label>Password</label>
-                            <span className="toggle-btn" onClick={() => togglePassword('signup')}>
-                                {showPassword.signup ? "🙈" : "👁️"}
-                            </span>
-                            <div className="bar"></div>
-                        </div>
-                        <div className="field-group">
-                            <input
-                                type={showPassword.confirm ? "text" : "password"}
-                                name="signup-confirm-password"
-                                autoComplete="new-password"
-                                placeholder={isMobile ? "Confirm your password" : " "} required
-                                value={signupData.confirm_password}
-                                onChange={e => setSignupData({ ...signupData, confirm_password: e.target.value })}
-                            />
-                            <label>Confirm Password</label>
-                            <span className="toggle-btn" onClick={() => togglePassword('confirm')}>
-                                {showPassword.confirm ? "🙈" : "👁️"}
-                            </span>
-                            <div className="bar"></div>
-                        </div>
-                        <button className="btn-mobile-solid" style={{marginTop: '20px', width: '100%'}} type="submit">Register</button>
-                        <span className="mobile-toggle" onClick={() => togglePanel(false)}>Already have an account? <strong>Login Now</strong></span>
-                    </form>
-                </div>
+                {isRightPanelActive && !forgotFlow && (
+                    <div className="form-box sign-up-box fade-in">
+                        <form onSubmit={handleSignup}>
+                            <Link to="/" className="brand-header" style={{ textDecoration: 'none' }}>
+                                <div className="brand-mark">D</div>
+                                <span className="brand-name">Pattern Detection</span>
+                            </Link>
+                            <h2 className="form-title">{isMobile ? "Join the <strong>Security</strong> Circle" : <>Start your <strong>journey.</strong></>}</h2>
+                            {error && <div className="error-msg error-visible">{error}</div>}
+                            <div className="field-group">
+                                <input type="text" placeholder={isMobile ? "Enter your username" : " "} required value={signupData.username} onChange={e => setSignupData({ ...signupData, username: e.target.value })} />
+                                <label>Username</label>
+                                <div className="bar"></div>
+                            </div>
+                            <div className="field-group">
+                                <input
+                                    type="email"
+                                    name="email"
+                                    autoComplete="email"
+                                    placeholder={isMobile ? "Enter your email" : " "} required
+                                    value={signupData.email}
+                                    onChange={e => setSignupData({ ...signupData, email: e.target.value })}
+                                />
+                                <label>Email Address</label>
+                                <div className="bar"></div>
+                            </div>
+                            <div className="field-group">
+                                <input
+                                    type={showPassword.signup ? "text" : "password"}
+                                    name="signup-password"
+                                    autoComplete="new-password"
+                                    placeholder={isMobile ? "Enter your password" : " "} required
+                                    value={signupData.password}
+                                    onChange={e => setSignupData({ ...signupData, password: e.target.value })}
+                                />
+                                <label>Password</label>
+                                <span className="toggle-btn" onClick={() => togglePassword('signup')}>
+                                    {showPassword.signup ? <EyeOff size={18} /> : <Eye size={18} />}
+                                </span>
+                                <div className="bar"></div>
+                            </div>
+                            <div className="field-group">
+                                <input
+                                    type={showPassword.confirm ? "text" : "password"}
+                                    name="signup-confirm-password"
+                                    autoComplete="new-password"
+                                    placeholder={isMobile ? "Confirm your password" : " "} required
+                                    value={signupData.confirm_password}
+                                    onChange={e => setSignupData({ ...signupData, confirm_password: e.target.value })}
+                                />
+                                <label>Confirm Password</label>
+                                <span className="toggle-btn" onClick={() => togglePassword('confirm')}>
+                                    {showPassword.confirm ? <EyeOff size={18} /> : <Eye size={18} />}
+                                </span>
+                                <div className="bar"></div>
+                            </div>
+                            <button className="btn-main" type="submit">Create Account →</button>
+                            <span className="toggle-link" onClick={() => togglePanel(false)}>Already have an account? <strong>Login Now</strong></span>
+                        </form>
+                    </div>
+                )}
 
                 {/* Login Form */}
-                <div className={`form-container sign-in-container ${forgotFlow ? 'hidden-flow' : ''}`} style={{ display: isMobile && mobileScreen !== 'login' ? 'none' : 'block' }}>
-                    <form onSubmit={handleLogin}>
-                        <h2 className="form-title">{isMobile ? "Welcome back! Glad to see you, Again!" : "Welcome Back."}</h2>
-                        {error && <div className="error-msg error-visible">{error}</div>}
-                        <div className="field-group">
-                            <input
-                                type="email"
-                                name="login-email"
-                                autoComplete="email"
-                                placeholder={isMobile ? "Enter your email" : " "} required
-                                value={loginData.email}
-                                onChange={e => setLoginData({ ...loginData, email: e.target.value })}
-                            />
-                            <label>Email Address</label>
-                            <div className="bar"></div>
-                        </div>
-                        <div className="field-group">
-                            <input
-                                type={showPassword.login ? "text" : "password"}
-                                className={showPassword.login && !windowFocused ? 'security-blur-inactive' : ''}
-                                name="login-password"
-                                autoComplete="off"
-                                placeholder={isMobile ? "Enter your password" : " "} required
-                                value={loginData.password}
-                                onChange={e => setLoginData({ ...loginData, password: e.target.value })}
-                            />
-                            <label>Password</label>
-                            <span className="toggle-btn" onClick={() => togglePassword('login')}>
-                                {showPassword.login ? "🙈" : "👁️"}
-                            </span>
-                            <div className="bar"></div>
-                        </div>
-                        <div className="forgot-pass-wrap">
-                            <span className="forgot-pass" onClick={() => setForgotFlow(true)}>Forgot Password?</span>
-                        </div>
-                        <button className="btn-mobile-solid" style={{width: '100%'}} type="submit">Login</button>
-                        <span className="mobile-toggle" onClick={() => togglePanel(true)}>Don't have an account? <strong>Register Now</strong></span>
-                    </form>
-                </div>
+                {!isRightPanelActive && !forgotFlow && (
+                    <div className="form-box sign-in-box fade-in">
+                        <form onSubmit={handleLogin}>
+                            <Link to="/" className="brand-header" style={{ textDecoration: 'none' }}>
+                                <div className="brand-mark">D</div>
+                                <span className="brand-name">Pattern Detection</span>
+                            </Link>
+                            <h2 className="form-title">{isMobile ? "Welcome back to <strong>Aegis</strong>" : <>Welcome <strong>Back.</strong></>}</h2>
+                            {error && <div className="error-msg error-visible">{error}</div>}
+                            <div className="field-group">
+                                <input
+                                    type="email"
+                                    name="login-email"
+                                    autoComplete="email"
+                                    placeholder={isMobile ? "Enter your email" : " "} required
+                                    value={loginData.email}
+                                    onChange={e => setLoginData({ ...loginData, email: e.target.value })}
+                                />
+                                <label>Email Address</label>
+                                <div className="bar"></div>
+                            </div>
+                            <div className="field-group">
+                                <input
+                                    type={showPassword.login ? "text" : "password"}
+                                    name="login-password"
+                                    autoComplete="off"
+                                    placeholder={isMobile ? "Enter your password" : " "} required
+                                    value={loginData.password}
+                                    onChange={e => setLoginData({ ...loginData, password: e.target.value })}
+                                />
+                                <label>Password</label>
+                                <span className="toggle-btn" onClick={() => togglePassword('login')}>
+                                    {showPassword.login ? <EyeOff size={18} /> : <Eye size={18} />}
+                                </span>
+                                <div className="bar"></div>
+                            </div>
+                            <div className="forgot-pass-wrap">
+                                <span className="forgot-pass" onClick={() => setForgotFlow(true)}>Forgot Credentials?</span>
+                            </div>
+                            <button className="btn-main" type="submit">Establish Connection →</button>
+                            <span className="toggle-link" onClick={() => togglePanel(true)}>New to the system? <strong>Register Now</strong></span>
+                        </form>
+                    </div>
+                )}
 
                 {/* Forgot Password Flow */}
                 {forgotFlow && (
-                    <div className="form-container forgot-container">
+                    <div className="form-box forgot-box fade-in">
                         <form onSubmit={(e) => {
                             e.preventDefault();
                             if (forgotPhase === 'email') handleForgotRequest(e);
                             else if (forgotPhase === 'otp') handleVerifyOtp(e);
                             else if (forgotPhase === 'new_pass') handleReset(e);
                         }}>
-                            <h2 className="form-title">Reset Access.</h2>
+                            <Link to="/" className="brand-header" style={{ textDecoration: 'none' }}>
+                                <div className="brand-mark">D</div>
+                                <span className="brand-name">Pattern Detection</span>
+                            </Link>
+                            <h2 className="form-title">Reset <strong>Access.</strong></h2>
                             {error && <div className="error-msg error-visible">{error}</div>}
 
                             {forgotPhase === 'email' && (
                                 <>
                                     <div className="field-group">
                                         <input type="email" placeholder=" " required value={forgotData.email} onChange={e => setForgotData({ ...forgotData, email: e.target.value })} />
-                                        <label>Email Address</label>
+                                        <label>Recovery Email</label>
                                         <div className="bar"></div>
                                     </div>
                                     <button className={`btn-main ${isSubmitting ? 'btn-loading' : ''}`} type="submit" disabled={isSubmitting}>
-                                        {isSubmitting ? 'Verifying...' : 'Verify Email →'}
+                                        {isSubmitting ? 'Searching...' : 'Send Recovery Code →'}
                                     </button>
-                                    <span className="forgot-pass" onClick={() => setForgotFlow(false)}>Back to Login</span>
+                                    <span className="forgot-pass" onClick={() => setForgotFlow(false)} style={{ display: 'block', textAlign: 'center', marginTop: '20px' }}>Return to Login</span>
                                 </>
                             )}
 
@@ -375,7 +400,7 @@ const AuthPage = () => {
                                         />
                                         <label>New Password</label>
                                         <span className="toggle-btn" onClick={() => togglePassword('reset')}>
-                                            {showPassword.reset ? "🙈" : "👁️"}
+                                            {showPassword.reset ? <EyeOff size={18} /> : <Eye size={18} />}
                                         </span>
                                         <div className="bar"></div>
                                     </div>
@@ -385,26 +410,6 @@ const AuthPage = () => {
                         </form>
                     </div>
                 )}
-
-                {/* Overlay Panel */}
-                <div className="overlay-container">
-                    <div className="overlay">
-                        <div className="brand">
-                            <div className="brand-mark">D</div>
-                            <span className="brand-name">Pattern Detection</span>
-                        </div>
-                        <div className="overlay-panel overlay-left">
-                            <h1 className="overlay-headline">Hello, <em>Again!</em></h1>
-                            <p className="overlay-subtitle">Ready to continue your journey? Dive back into the world of insights.</p>
-                            <button className="btn-ghost" onClick={() => togglePanel(false)}>Sign In →</button>
-                        </div>
-                        <div className="overlay-panel overlay-right">
-                            <h1 className="overlay-headline">Start your <em>journey</em></h1>
-                            <p className="overlay-subtitle">Join thousands of creators building the future. Your story begins now.</p>
-                            <button className="btn-ghost" onClick={() => togglePanel(true)}>Create Account</button>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
     );

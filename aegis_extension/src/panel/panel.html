@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aegis Pro War Room</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <link rel="stylesheet" href="../styles/panel.css">
+</head>
+<body>
+    <div id="root"></div>
+    
+    <script type="text/babel">
+        // Import components (in a real build, these would be separate files)
+        const { useState, useEffect } = React;
+
+        // Mock WarRoom component for standalone HTML
+        const WarRoom = () => {
+            const [analysis, setAnalysis] = useState(null);
+            const [ghostWriterEnabled, setGhostWriterEnabled] = useState(false);
+            const [activeTab, setActiveTab] = useState('overview');
+            const [loading, setLoading] = useState(false);
+
+            useEffect(() => {
+                // Request current analysis from background script
+                chrome.runtime.sendMessage({ type: 'GET_CURRENT_ANALYSIS' }, (response) => {
+                    if (response && response.analysis) {
+                        setAnalysis(response.analysis);
+                    }
+                });
+
+                // Listen for analysis updates
+                const messageListener = (message) => {
+                    if (message.type === 'ANALYSIS_COMPLETE') {
+                        setAnalysis(message.analysis);
+                        setLoading(false);
+                    }
+                };
+
+                chrome.runtime.onMessage.addListener(messageListener);
+                return () => chrome.runtime.onMessage.removeListener(messageListener);
+            }, []);
+
+            const toggleGhostWriter = () => {
+                const newState = !ghostWriterEnabled;
+                setGhostWriterEnabled(newState);
+                
+                chrome.runtime.sendMessage({
+                    type: 'TOGGLE_GHOST_WRITER',
+                    enabled: newState
+                });
+            };
+
+            if (!analysis) {
+                return (
+                    <div className="war-room loading">
+                        <div className="loading-spinner"></div>
+                        <p>Initializing Aegis Pro...</p>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="war-room">
+                    <div className="war-room-header">
+                        <div className="header-left">
+                            <h1>Aegis Pro War Room</h1>
+                            <div className="url-display">
+                                <small>{analysis.url}</small>
+                            </div>
+                        </div>
+                        <div className="header-right">
+                            <button 
+                                onClick={toggleGhostWriter}
+                                className={`btn ${ghostWriterEnabled ? 'btn-success' : 'btn-secondary'}`}
+                            >
+                                {ghostWriterEnabled ? '🛡️ Ghost-Writer ON' : '👻 Ghost-Writer OFF'}
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="trust-score-section">
+                        <div className="trust-score-container">
+                            <div className="score-gauge">
+                                <div className="gauge-circle">
+                                    <div 
+                                        className="gauge-fill"
+                                        style={{
+                                            background: `conic-gradient(${getScoreColor(analysis.trust_score)} 0deg ${analysis.trust_score * 3.6}deg, #e0e0e0 ${analysis.trust_score * 3.6}deg 360deg)`
+                                        }}
+                                    ></div>
+                                    <div className="gauge-center">
+                                        <div className="score-number">{analysis.trust_score}</div>
+                                        <div className="score-label">Trust Score</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div className="risk-indicator">
+                                <div className="risk-icon">{getRiskIcon(analysis.risk_level)}</div>
+                                <div className="risk-text">
+                                    <div className="risk-level">{analysis.risk_level}</div>
+                                    <div className="risk-status">{analysis.status}</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="summary-text">
+                            <p>{analysis.summary}</p>
+                        </div>
+                    </div>
+
+                    <div className="tab-navigation">
+                        {['overview', 'evidence', 'remediation', 'heatmap', 'history'].map(tab => (
+                            <button
+                                key={tab}
+                                className={`tab-btn ${activeTab === tab ? 'active' : ''}`}
+                                onClick={() => setActiveTab(tab)}
+                            >
+                                {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                            </button>
+                        ))}
+                    </div>
+
+                    <div className="tab-content">
+                        {activeTab === 'overview' && (
+                            <div className="overview-tab">
+                                <div className="overview-grid">
+                                    <div className="overview-card">
+                                        <h3>Engines Used</h3>
+                                        <div className="engines-list">
+                                            {analysis.engines_used.map(engine => (
+                                                <span key={engine} className="engine-badge">
+                                                    {engine}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="overview-card">
+                                        <h3>Patterns Found</h3>
+                                        <div className="patterns-count">
+                                            <span className="count-number">{analysis.patterns_found}</span>
+                                            <span className="count-label">Total Issues</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        function getScoreColor(score) {
+            if (score >= 75) return '#4caf50';
+            if (score >= 45) return '#ff9800';
+            return '#f44336';
+        }
+
+        function getRiskIcon(riskLevel) {
+            const icons = {
+                'SAFE': '🛡️',
+                'CAUTION': '⚠️',
+                'DANGER': '🚨'
+            };
+            return icons[riskLevel] || '❓';
+        }
+
+        // Render the app
+        ReactDOM.render(<WarRoom />, document.getElementById('root'));
+    </script>
+</body>
+</html>

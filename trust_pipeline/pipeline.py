@@ -1,156 +1,185 @@
+import re
 from trust_pipeline.utils import detect_input_type, extract_domain_from_anything, normalize_full_url
-from trust_pipeline.datasets import lookup_verified_domain, lookup_fake_domain, lookup_fake_exact_url
+from trust_pipeline.datasets import lookup_verified_domain, lookup_fake_domain
 from trust_pipeline.verification import internet_verify_official, analyze_url_rules
 from trust_pipeline.text_analyzer import analyze_text_input
-from trust_pipeline.config import (
-    TRUST_SCORE_VERIFIED,
-    TRUST_SCORE_FAKE_EXACT,
-    TRUST_SCORE_FAKE_DOMAIN
-)
+
 
 def analyze_input(user_input):
-    """
-    The main orchestrator handling step-by-step resolution.
-    It routes the original input to the appropriate pipeline and returns a unified JSON format response block.
-    """
     original_input = user_input.strip() if user_input else ""
     input_type = detect_input_type(original_input)
 
     if input_type == "invalid":
         return {
-            "original_input": original_input,
-            "input_type": "invalid",
-            "normalized_url": None,
-            "domain": None,
             "status": "INVALID_INPUT",
             "trust_score": 0,
-            "category": None,
-            "source": "invalid_input",
             "message": "Please enter a valid URL, domain, or meaningful text.",
-            "findings": [],
-            "is_official": None
+            "findings": []
         }
 
-    # URL / DOMAIN PIPELINE
     if input_type in ("url", "domain"):
         return process_url_domain(original_input, input_type)
-
-    # PLAIN TEXT PIPELINE
     return process_text(original_input)
 
 
 def process_url_domain(original_input, input_type):
-    """
-    Dedicated logic sequence for URLs/Domains: Lookups followed by verify-fallbacks.
-    """
     domain = extract_domain_from_anything(original_input)
-    normalized_url = normalize_full_url(original_input)
+    findings = []
 
-    # Base response
-    resp = {
-        "original_input": original_input,
-        "input_type": input_type,
-        "normalized_url": normalized_url,
-        "domain": domain,
-        "category": None,
-        "findings": [],
-        "is_official": None
+    # ── Step 1: Structural rule analysis ────────────────────────────────────
+    rule_results = analyze_url_rules(domain, original_input)
+    findings.extend(rule_results["findings"])
+    structural_risk = rule_results["risk_score"]
+
+    # High structural risk — return immediately, no need to fetch
+    if structural_risk >= 50:
+        final_score = max(0, 30 - max(0, structural_risk - 50))
+        return _build_result(final_score, findings, rule_results, original_input)
+
+    # ── Step 2: Dataset lookup ───────────────────────────────────────────────
+    is_verified = lookup_verified_domain(domain) if domain else False
+    is_fake = lookup_fake_domain(domain) if domain else False
+
+    if is_fake:
+        findings.append("Domain found in global malicious blacklist.")
+        return _build_result(8, findings, rule_results, original_input)
+
+    # ── Step 3: Live verification ────────────────────────────────────────────
+    verify_data = internet_verify_official(original_input, domain=domain)
+    live_findings = [f for f in verify_data["findings"] if f not in findings]
+    findings.extend(live_findings)
+
+    live_status = verify_data["status"]
+    live_score = verify_data["trust_score"]
+
+    # ── Step 4: Combine signals ──────────────────────────────────────────────
+    # Structural risk always reduces the live score — more risk = bigger penalty
+    penalty = min(structural_risk, 40)
+
+    if live_status == "SAFE":
+        final_score = max(live_score - penalty, 55)
+    elif live_status == "LIKELY_SAFE":
+        base = 80 if is_verified else live_score
+        final_score = max(base - penalty, 45)
+    elif live_status == "FAKE":
+        final_score = min(live_score, 15)
+    elif live_status == "SUSPICIOUS":
+        base = 60 if is_verified else live_score
+        final_score = max(base - penalty, 10)
+    else:  # UNKNOWN
+        base = 70 if is_verified else 45
+        final_score = max(base - penalty, 10)
+
+    final_score = max(0, min(100, final_score))
+    return _build_result(final_score, findings, rule_results, original_input)
+
+
+def _build_result(final_score, findings, rule_results, original_input):
+    final_score = max(0, min(100, int(final_score)))
+
+    if final_score >= 75:
+        status = "SAFE"
+        message = "Live verification passed. This site appears legitimate and trustworthy."
+    elif final_score >= 45:
+        status = "SUSPICIOUS"
+        message = "Verification inconclusive. Some elements could not be confirmed — proceed with caution."
+    else:
+        status = "UNSAFE"
+        message = "High-risk indicators detected. This URL shows strong signs of being fake or malicious."
+
+    # Hard overrides
+    if rule_results.get("is_shortened") or any("impersonation" in f.lower() for f in findings):
+        if status == "SAFE":
+            status = "SUSPICIOUS"
+            final_score = min(final_score, 72)
+
+    return {
+        "status": status,
+        "trust_score": final_score,
+        "message": message,
+        "risk_level": "HIGH" if status == "UNSAFE" else "MEDIUM" if status == "SUSPICIOUS" else "LOW",
+        "patterns": findings,
+        "findings": findings,
+        "patterns_found": len(findings),
+        "type": "url",
+        "url": original_input
     }
 
-    if not domain:
-        resp.update({
-            "status": "INVALID_INPUT",
-            "trust_score": 0,
-            "source": "invalid_input",
-            "message": "The URL/domain format could not be parsed correctly."
-        })
-        return resp
-
-    # 1. Dataset Match: Verified
-    if lookup_verified_domain(domain):
-        resp.update({
-            "status": "SAFE",
-            "trust_score": TRUST_SCORE_VERIFIED,
-            "category": "verified",
-            "source": "verified_dataset",
-            "message": "This domain exists in the verified safe-domain dataset.",
-            "findings": ["Domain matched verified dataset."],
-            "is_official": True
-        })
-        return resp
-
-    # 2. Dataset Match: Fake Exact URL
-    fake_exact_category = lookup_fake_exact_url(normalized_url)
-    if fake_exact_category:
-        resp.update({
-            "status": "SUSPICIOUS",
-            "trust_score": TRUST_SCORE_FAKE_EXACT,
-            "category": fake_exact_category,
-            "source": "fake_dataset_exact_url",
-            "message": "This exact URL matched the suspicious/fake dataset.",
-            "findings": ["Exact URL matched fake dataset."],
-            "is_official": False
-        })
-        return resp
-
-    # 3. Dataset Match: Fake Domain
-    fake_domain_category = lookup_fake_domain(domain)
-    if fake_domain_category:
-        resp.update({
-            "status": "SUSPICIOUS",
-            "trust_score": TRUST_SCORE_FAKE_DOMAIN,
-            "category": fake_domain_category,
-            "source": "fake_dataset_domain",
-            "message": "This domain matched the suspicious/fake dataset.",
-            "findings": ["Domain matched fake dataset."],
-            "is_official": False
-        })
-        return resp
-
-    # 4. Internet verification (Fallback)
-    verify_result = internet_verify_official(original_input, domain=domain)
-    
-    # 5. Rule parsing for heuristics
-    url_rule_result = analyze_url_rules(domain, normalized_url)
-
-    findings = verify_result["findings"] + url_rule_result["findings"]
-    final_status = verify_result["status"]
-    final_score = verify_result["trust_score"]
-
-    if url_rule_result["risk_score"] >= 20 and final_status == "LIKELY_SAFE":
-        final_status = "POTENTIALLY_SUSPICIOUS"
-        final_score = min(final_score, 55)
-        findings.append("URL rule engine reduced confidence due to structural risk signals.")
-    elif url_rule_result["risk_score"] >= 20 and final_status == "UNKNOWN":
-        final_status = "POTENTIALLY_SUSPICIOUS"
-        final_score = 40
-        findings.append("URL rule engine found multiple suspicious URL features.")
-
-    resp.update({
-        "status": final_status,
-        "trust_score": final_score,
-        "source": verify_result["source"],
-        "message": verify_result["message"],
-        "findings": findings,
-        "is_official": verify_result["is_official"]
-    })
-    return resp
 
 def process_text(original_input):
     """
-    Direct route handling purely linguistic content analysis logic.
+    Handles pure text input. Also extracts any embedded URLs and
+    runs URL analysis on them, combining both scores.
     """
     text_result = analyze_text_input(original_input)
+    findings = list(text_result.get("findings", []))
+    text_score = text_result["trust_score"]
+
+    # Extract any URLs embedded in the text and analyze them
+    url_pattern = re.compile(
+        r'https?://[^\s]+|(?:[a-zA-Z0-9-]+\.)+(?:com|net|org|in|io|co|xyz|top|info|biz|gov|edu)[^\s]*',
+        re.IGNORECASE
+    )
+    embedded_urls = url_pattern.findall(original_input)
+
+    worst_url_score = None
+    for raw_url in embedded_urls:
+        domain = extract_domain_from_anything(raw_url)
+        if not domain:
+            continue
+        rule_results = analyze_url_rules(domain, raw_url)
+        url_findings = [f"[URL: {raw_url[:50]}] {f}" for f in rule_results["findings"]]
+        findings.extend(url_findings)
+
+        structural_risk = rule_results["risk_score"]
+        if structural_risk >= 50:
+            url_score = max(0, 30 - max(0, structural_risk - 50))
+        else:
+            is_fake = lookup_fake_domain(domain)
+            if is_fake:
+                url_score = 8
+                findings.append(f"[URL: {raw_url[:50]}] Domain found in malicious blacklist.")
+            else:
+                verify_data = internet_verify_official(raw_url, domain=domain)
+                live_status = verify_data["status"]
+                live_score = verify_data["trust_score"]
+                penalty = min(structural_risk, 40)
+                if live_status == "SAFE":
+                    url_score = max(live_score - penalty, 55)
+                elif live_status == "FAKE":
+                    url_score = min(live_score, 15)
+                else:
+                    url_score = max(live_score - penalty, 10)
+
+        if worst_url_score is None or url_score < worst_url_score:
+            worst_url_score = url_score
+
+    # Final score = worst of text score and URL score
+    if worst_url_score is not None:
+        final_score = min(text_score, worst_url_score)
+    else:
+        final_score = text_score
+
+    final_score = max(0, min(100, int(final_score)))
+
+    if final_score >= 75:
+        status = "SAFE"
+        message = "No suspicious patterns detected in the content."
+    elif final_score >= 45:
+        status = "SUSPICIOUS"
+        message = "This message contains patterns commonly used in scams or phishing attempts."
+    else:
+        status = "UNSAFE"
+        message = "High-risk content detected. This message shows strong signs of being a scam."
+
     return {
-        "original_input": original_input,
-        "input_type": "text",
-        "normalized_url": None,
-        "domain": None,
-        "status": text_result["status"],
-        "trust_score": text_result["trust_score"],
-        "category": None,
-        "source": text_result["source"],
-        "message": text_result["message"],
-        "findings": text_result["findings"],
-        "is_official": text_result["is_official"]
+        "status": status,
+        "trust_score": final_score,
+        "message": message,
+        "risk_level": "HIGH" if status == "UNSAFE" else "MEDIUM" if status == "SUSPICIOUS" else "LOW",
+        "patterns": findings,
+        "findings": findings,
+        "patterns_found": len(findings),
+        "type": "text",
+        "url": original_input[:60] + ("..." if len(original_input) > 60 else "")
     }

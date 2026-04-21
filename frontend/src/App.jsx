@@ -3,11 +3,11 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import axios from 'axios';
 import API_BASE_URL from './config';
 import LandingPage from './pages/LandingPage';
-import ClientHome from './pages/ClientHome';
+import EnhancedClientHome from './pages/EnhancedClientHome';
 import AuthPage from './pages/AuthPage';
 import Dashboard from './pages/Dashboard';
 import Analyze from './pages/Analyze';
-import AdminDashboard from './pages/AdminDashboard';
+import EnhancedAdminDashboard from './pages/EnhancedAdminDashboard';
 import AdminLogin from './pages/AdminLogin';
 import Cookies from 'js-cookie';
 import './App.css';
@@ -46,7 +46,7 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={isLoggedIn ? <ClientHome /> : <LandingPage />} />
+        <Route path="/" element={isLoggedIn ? <EnhancedClientHome /> : <LandingPage />} />
         <Route path="/login" element={<AuthPage />} />
         <Route path="/signup" element={<AuthPage />} />
         <Route path="/dashboard" element={<Dashboard />} />
@@ -54,7 +54,7 @@ function App() {
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route 
           path="/admin" 
-          element={isAdmin ? <AdminDashboard /> : <AdminLogin />} 
+          element={isAdmin ? <EnhancedAdminDashboard /> : <AdminLogin />} 
         />
       </Routes>
     </Router>
