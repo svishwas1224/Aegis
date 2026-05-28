@@ -1,413 +1,329 @@
 # Aegis Dark-Pattern Detector
 
-## 🔒 Advanced Dark Pattern Detection System
+## Advanced Dark Pattern Detection System with Tri-Engine Analysis
 
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![Python](https://img.shields.io/badge/Python-3.14+-blue.svg)](https://python.org)
-[![Flask](https://img.shields.io/badge/Flask-2.3+-green.svg)](https://flask.palletsprojects.com)
-[![React](https://img.shields.io/badge/React-18+-blue.svg)](https://reactjs.org)
-[![MongoDB](https://img.shields.io/badge/MongoDB-6.0+-green.svg)](https://www.mongodb.com)
+[![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
+[![Flask](https://img.shields.io/badge/Flask-3.0.2-green.svg)](https://flask.palletsprojects.com)
+[![React](https://img.shields.io/badge/React-19.2.0-blue.svg)](https://react.dev)
+[![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-green.svg)](https://www.mongodb.com)
 
 ---
 
 ## 🎯 Overview
 
-**Aegis Dark-Pattern Detector** is an advanced cybersecurity system that automatically identifies and alerts users to manipulative design patterns (dark patterns) used in websites and applications. The system employs a sophisticated tri-engine architecture combining Natural Language Processing (NLP), Computer Vision, and Behavioral Analysis to provide comprehensive protection against digital manipulation.
+**Aegis Dark-Pattern Detector** is a sophisticated, real-time dark pattern detection system that shields users from manipulative web design tactics. The system employs a powerful tri-engine architecture combining Natural Language Processing (NLP), Visual HTML/CSS analysis, and Behavioral HTTP Archive (HAR) analysis, augmented by a custom-trained scikit-learn machine learning model, to identify over 25 distinct types of dark patterns, including crawler traps.
 
-### **🚀 Key Features**
-- **Real-time Detection**: Live analysis while browsing
-- **Multi-Engine Analysis**: NLP + Visual + Behavioral pattern detection
-- **Trust Scoring**: Quantified assessment (0-100 scale) of website trustworthiness
-- **Chrome Extension**: Browser-based protection for everyday users
-- **Admin Dashboard**: Comprehensive management and analytics platform
-- **AI-Powered Insights**: Machine learning for advanced pattern recognition
-- **WCAG Compliance**: Accessibility violation detection
-- **Privacy Protection**: No personal data collection or storage
+### 🚀 Key Features
+
+- **Tri-Engine Analysis**: Combines NLP, Visual, and Behavioral analysis for comprehensive detection
+- **25+ Dark Pattern Types Detected**: Including urgency, scarcity, hidden costs, subscription traps, crawler traps, and more
+- **Trust Scoring**: Quantified 0-100 trust score with risk levels (Low/Medium/High)
+- **JavaScript Support**: Analyzes modern SPAs using Playwright
+- **User Authentication System**: Secure login/signup with password hashing and OTP verification
+- **Dual Dashboards**: Client dashboard and Admin dashboard for comprehensive management
+- **Real-Time Analysis**: Live feedback as you browse
+- **MongoDB Atlas Integration**: Cloud database for scan history and user data
+- **Ollama AI Integration**: Optional AI-powered insights (if configured)
 
 ---
 
 ## 🛠️ Technology Stack
 
-### **Backend**
-- **Python 3.14+**: Modern Python with advanced features
-- **Flask 2.3+**: Lightweight, flexible web framework
+### Backend
+- **Python 3.10+**: Modern Python with advanced features
+- **Flask 3.0.2**: Lightweight, flexible web framework
 - **MongoDB Atlas**: Cloud-hosted NoSQL database
-- **Ollama AI**: Local AI model integration
-- **Tri-Engine Architecture**: Coordinated multi-engine analysis
+- **Scikit-learn 1.8.0**: Machine learning model training and inference
+- **Playwright for Python**: Web scraping with JavaScript rendering
+- **spaCy**: Natural language processing
+- **Beautiful Soup 4.12.3**: HTML parsing
+- **Werkzeug Security**: Password hashing and security
 
-### **Frontend**
-- **React 18+**: Modern UI with hooks and concurrent features
-- **Vite**: Fast build tool and development server
-- **Lucide React**: Beautiful, consistent icon library
-- **Recharts**: Interactive data visualization
-- **TailwindCSS**: Utility-first CSS framework
-
-### **Chrome Extension**
-- **Manifest V3**: Latest Chrome extension standards
-- **Service Workers**: Background processing and API communication
-- **Content Scripts**: Real-time page monitoring and analysis
+### Frontend
+- **React 19.2.0**: Modern UI library
+- **Vite 7.3.1**: Fast build tool and development server
+- **Lucide React 0.577.0**: Beautiful, consistent icon library
+- **Recharts 3.8.0**: Interactive data visualization
+- **React Router DOM 7.13.1**: Routing
+- **Axios 1.13.6**: HTTP client for API communication
+- **SweetAlert2**: Beautiful alerts
+- **js-cookie**: Cookie management
 
 ---
 
 ## 🚀 Quick Start
 
-### **For Users**
-1. **Install Chrome Extension**: 
-   ```bash
-   # Download from releases or clone repository
-   npm install
-   npm run build
-   ```
-2. **Access Web Interface**: 
-   - Navigate to [https://your-domain.com](https://your-domain.com)
-   - Create account or login
-   - Start protected browsing
+### Prerequisites
+- Python 3.10+
+- Node.js 18+
+- npm or yarn
+- MongoDB Atlas account (or local MongoDB)
+- (Optional) Ollama running locally for AI insights
 
-### **For Developers**
-1. **Clone Repository**:
+### Installation & Setup
+
+1. **Clone Repository**
    ```bash
-   git clone https://github.com/svishwas1224/Aegis.git
-   cd Aegis
+   git clone https://github.com/svishwas1224/newanti.git
+   cd newanti
    ```
-2. **Backend Setup**:
+
+2. **Backend Setup**
    ```bash
+   # Create virtual environment
    python -m venv venv
+   
+   # Activate virtual environment
+   # Windows:
+   venv\Scripts\activate
+   # macOS/Linux:
    source venv/bin/activate
+   
+   # Install dependencies
    pip install -r requirements.txt
-   cp .env.example .env
-   # Edit .env with your configuration
-   python app.py
+   
+   # Install Playwright browsers
+   playwright install chromium
    ```
-3. **Frontend Setup**:
+
+3. **Frontend Setup**
    ```bash
    cd frontend
    npm install
-   npm run dev
    ```
 
-### **For Administrators**
-1. **Access Admin Dashboard**:
-   - Navigate to `/admin` route
-   - Login with administrator credentials
-   - Manage users, view analytics, configure system
+4. **Environment Configuration**
+   Create a `.env` file in the project root:
+   ```env
+   MONGO_URI=mongodb+srv://<username>:<password>@cluster0.mongodb.net/
+   SECRET_KEY=your-secret-key-here
+   APP_SESSION_KEY=your-session-key-here
+   OLLAMA_URL=http://localhost:11434/api/generate
+   MODEL_NAME=qwen2.5:7b
+   SMTP_EMAIL=your-email@gmail.com
+   SMTP_APP_PASSWORD=your-gmail-app-password
+   ```
+
+5. **Train ML Model** (if not already trained)
+   ```bash
+   python engines/train_ml_model.py
+   ```
+
+6. **Run the Application**
+   ```bash
+   # Option 1: Run everything together (from project root)
+   npm run dev-all
+   
+   # Option 2: Run separately
+   # Backend (from project root)
+   python app.py
+   
+   # Frontend Client (from project root)
+   npm run frontend-client
+   
+   # Frontend Admin (from project root)
+   npm run frontend-admin
+   ```
+
+7. **Access the Application**
+   - Client Dashboard: http://localhost:5173
+   - Admin Dashboard: http://localhost:5174
+   - Backend API: http://localhost:5000
 
 ---
 
 ## 🎯 Core Capabilities
 
-### **Pattern Detection**
-- **Linguistic Patterns**: Confirm shaming, urgency, scarcity, social proof
-- **Visual Patterns**: Low contrast buttons, hidden elements, misleading hierarchy
+### Dark Pattern Detection
+- **Linguistic Patterns**: Confirm shaming, urgency, scarcity, manipulative language
+- **Visual Patterns**: Hidden elements, deceptive positioning, visual hierarchy manipulation
 - **Behavioral Patterns**: Forced actions, countdown manipulation, fake notifications
-- **Advanced Patterns**: Subscription traps, price flickering, cookie walls
+- **Advanced Patterns**: Subscription traps, price flickering, cookie walls, drip pricing
+- **Crawler Traps**: Honeypot links, infinite URL loops, hidden form fields
 
-### **Analysis Features**
-- **Real-time Monitoring**: Live page analysis while browsing
-- **Trust Score Calculation**: 0-100 scale with confidence metrics
-- **Severity Classification**: Low, Medium, High, Critical severity levels
-- **Remediation Suggestions**: Actionable fixes for detected patterns
-- **Historical Tracking**: Comprehensive analysis history and trends
+### User Features
+- **Text Analysis**: Analyze raw text for dark patterns
+- **URL Analysis**: Scrape and analyze live websites
+- **Real-Time Feedback**: Live analysis as you type
+- **Trust Score**: 0-100 trust score with risk levels
+- **Detailed Findings**: Pattern explanations and remediation suggestions
+- **Scan History**: View your past analyses
+- **Profile Management**: Update username and password
+- **Password Reset**: OTP-based password reset via email
 
-### **User Management**
-- **Secure Authentication**: Password hashing and session management
-- **Role-Based Access**: User and administrator roles
-- **Profile Management**: Personal settings and preferences
-- **Activity Tracking**: Detailed usage analytics and history
+### Admin Features
+- **Secure Admin Login**: Separate admin authentication
+- **User Management**: View all registered users
+- **Analytics Dashboard**: Comprehensive usage statistics
+- **Scan History**: View all scans across all users
+- **Real-Time Stats**: Hourly, weekly, and monthly scan metrics
 
 ---
 
 ## 📊 System Architecture
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                 Chrome Extension                    │
-│  ┌─────────────┐  ┌─────────────────────────┐        │
-│  │ Content Script │  │    Flask Backend      │        │
-│  │   Real-time   │  │  ┌─────────────────┐ │        │
-│  │   Analysis    │  │  │   Tri-Engine    │        │
-│  │   & Alerts   │  │  │   Analyzer       │        │
-│  └─────────────┘  │  │  └─────────────────┘ │        │
-│                    │  │                     │        │
-│                    │  │  ┌─────────────────┐ │        │
-│                    │  │  │   MongoDB Atlas  │        │
-│                    │  │  │   Database        │        │
-│                    │  │  └─────────────────┘ │        │
-│                    │  │                     │        │
-│                    │  │  ┌─────────────────┐ │        │
-│  ┌────────────────┐  │  │  │   Web Frontend   │        │
-│  │   React App     │  │  │   (Admin/User)    │        │
-│  │   with Enhanced  │  │  │   Interfaces       │        │
-│  │   UI/UX         │  │  │                   │        │
-│  └────────────────┘  │  │  └─────────────────┘ │        │
-└─────────────────────────────────────────────────────────┘
-```
-
----
-
-## 📋 Installation Guide
-
-### **Prerequisites**
-- **Python 3.14+**: Latest Python version
-- **Node.js 16+**: For frontend development
-- **MongoDB Atlas**: Cloud database account
-- **Chrome Browser**: Latest Chrome version for extension
-- **Git**: Version control system
-
-### **Backend Installation**
-```bash
-# 1. Clone Repository
-git clone https://github.com/svishwas1224/Aegis.git
-cd Aegis
-
-# 2. Create Virtual Environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# 3. Install Dependencies
-pip install -r requirements.txt
-
-# 4. Configure Environment
-cp .env.example .env
-# Edit .env with your configuration:
-# MONGO_URI=mongodb+srv://...
-# OLLAMA_URL=http://localhost:11434/api/generate
-# MODEL_NAME=qwen2.5:7b
-# APP_SESSION_KEY=your-secret-key
-
-# 5. Start Application
-python app.py
-```
-
-### **Frontend Installation**
-```bash
-# 1. Navigate to Frontend
-cd frontend
-
-# 2. Install Dependencies
-npm install
-
-# 3. Environment Configuration
-cp .env.example .env
-# Add frontend configuration if needed
-
-# 4. Start Development Server
-npm run dev        # Development mode
-# OR
-npm run build       # Production build
-```
-
-### **Chrome Extension Installation**
-```bash
-# 1. Navigate to Extension
-cd aegis_extension
-
-# 2. Install Dependencies
-npm install
-
-# 3. Build Extension
-npm run build
-
-# 4. Load in Chrome
-# 1. Open Chrome and go to chrome://extensions/
-# 2. Enable "Developer mode"
-# 3. Click "Load unpacked" and select extension folder
-# 4. Pin extension to toolbar for easy access
+┌─────────────────────────────────────────────────────────────┐
+│                        React Frontends                        │
+│  ┌──────────────────────┐  ┌──────────────────────────────┐  │
+│  │ Client Dashboard     │  │ Admin Dashboard              │  │
+│  │ (localhost:5173)     │  │ (localhost:5174)             │  │
+│  └───────────┬──────────┘  └──────────────┬───────────────┘  │
+└──────────────┼─────────────────────────────┼──────────────────┘
+               │                             │
+               ▼                             ▼
+┌─────────────────────────────────────────────────────────────┐
+│                      Flask Backend API                       │
+│  ┌───────────────────────────────────────────────────────┐  │
+│  │ Authentication & Authorization (login/signup/OTP)      │  │
+│  └───────────────────────────────────────────────────────┘  │
+│  ┌───────────────────────────────────────────────────────┐  │
+│  │           Tri-Engine Analyzer                         │  │
+│  │ ┌──────────┐ ┌──────────┐ ┌──────────────────┐       │  │
+│  │ │ NLP      │ │ Visual   │ │ Behavioral/HAR   │       │  │
+│  │ │ Engine   │ │ Engine   │ │ Engine           │       │  │
+│  │ └──────────┘ └──────────┘ └──────────────────┘       │  │
+│  └───────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│                      MongoDB Databases                       │
+│  ┌──────────────────┐ ┌──────────────────┐ ┌───────────────┐ │
+│  │ dark-pattern-    │ │ dark-pattern-    │ │ aegis-pro     │ │
+│  │ users            │ │ admin            │ │               │ │
+│  └──────────────────┘ └──────────────────┘ └───────────────┘ │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
 ## 📖 Documentation
 
-### **Comprehensive Documentation Available**
-- **[Project Documentation](documentation/project/AEGIS_DARK-PATTERN_DETECTOR_PROJECT_DOCUMENTATION.md)**: Complete technical specifications
-- **[API Documentation](documentation/api/)**: Chrome extension and frontend APIs
-- **[Testing Reports](documentation/reports/)**: Comprehensive testing results
-- **[Deployment Guides](documentation/deployment/)**: Setup and maintenance procedures
-- **[Security Guidelines](documentation/PRIVACY_SECURITY_CHECKLIST.md)**: Privacy and security compliance
+### API Endpoints
+- **Authentication**:
+  - `POST /api/signup`: User registration
+  - `POST /api/login`: User login
+  - `POST /api/forgot-password`: Request password reset OTP
+  - `POST /api/verify-otp`: Verify OTP
+  - `POST /api/reset-password`: Reset password
+  - `GET /api/logout`: User logout
+  - `POST /api/admin/login`: Admin login
 
-### **Getting Help**
-- **[Issues](https://github.com/svishwas1224/Aegis/issues)**: Bug reports and feature requests
-- **[Discussions](https://github.com/svishwas1224/Aegis/discussions)**: Community discussions
-- **[Wiki](https://github.com/svishwas1224/Aegis/wiki)**: Detailed documentation
-- **[Releases](https://github.com/svishwas1224/Aegis/releases)**: Version history and downloads
+- **Analysis**:
+  - `POST /api/analyze`: Analyze URL
+  - `POST /api/analyze-text`: Analyze text
+  - `POST /api/tri-engine-analyze`: Comprehensive tri-engine analysis
+  - `POST /api/ext-analyze`: Chrome extension analysis
+  - `POST /api/scrape-details`: Scrape website details
+
+- **User Dashboard**:
+  - `GET /api/dashboard`: User dashboard data
+  - `GET /api/get-history`: User scan history
+  - `POST /api/clear-history`: Clear user history
+  - `POST /api/update-profile`: Update user profile
+  - `GET /api/compliance-score`: User compliance score
+
+- **Admin Dashboard**:
+  - `GET /api/admin/stats`: Admin statistics
+  - (And more admin endpoints)
+
+- **System**:
+  - `GET /api/health`: System health check
+  - `GET /api/verify-session`: Verify user session
+  - `POST /api/detect-device`: Detect user device
 
 ---
 
 ## 🔒 Security & Privacy
 
-### **Privacy First Design**
-- **No Personal Data**: No personal information collected or stored
-- **Local Processing**: All analysis happens locally in browser
-- **Anonymous Analytics**: Only aggregated, anonymized usage data
-- **Data Minimization**: Only necessary data collected for functionality
-- **User Control**: Complete control over data sharing and deletion
+### Privacy
+- **No Personal Data Sharing**: No data shared with third parties
+- **Local Analysis Option**: All core analysis happens locally
+- **Hashed Passwords**: Passwords stored using Werkzeug's secure hashing
+- **Session Management**: Secure session cookies with SameSite=Lax
 
-### **Security Measures**
+### Security
 - **Secure Authentication**: Password hashing and session management
 - **Input Validation**: Comprehensive validation and sanitization
-- **SQL Injection Prevention**: Parameterized database queries
-- **XSS Protection**: Content Security Policy headers
-- **HTTPS Enforcement**: Secure communication for all API calls
-- **Environment Security**: Sensitive data properly protected
-
-### **Compliance Standards**
-- **GDPR Ready**: Full compliance with data protection regulations
-- **WCAG 2.1 AA**: Web accessibility standards compliance
-- **Security Best Practices**: Industry-standard security measures
-- **Privacy by Design**: Built-in privacy protections
-
----
-
-## 🎯 Use Cases
-
-### **For Individual Users**
-- **Safe Browsing**: Get alerted to manipulative patterns while shopping
-- **Informed Decisions**: Make better choices with trust scores and warnings
-- **Privacy Protection**: Browse without being tracked or manipulated
-- **Educational Value**: Learn about dark patterns and digital literacy
-
-### **For Web Developers**
-- **Compliance Testing**: Check websites for dark pattern compliance
-- **Design Improvement**: Get actionable suggestions for ethical design
-- **Accessibility Auditing**: Ensure WCAG compliance and accessibility
-- **Competitive Analysis**: Understand how competitors use design patterns
-
-### **For Researchers**
-- **Pattern Analysis**: Study emerging dark pattern techniques
-- **Data Collection**: Gather anonymized data for research
-- **Algorithm Testing**: Test and improve detection algorithms
-- **Academic Research**: Contribute to dark pattern research literature
-
-### **For Organizations**
-- **Enterprise Protection**: Deploy across organization for comprehensive coverage
-- **Compliance Monitoring**: Ensure all web properties comply with regulations
-- **Risk Management**: Identify and mitigate digital manipulation risks
-- **Brand Protection**: Monitor for brand abuse and impersonation
+- **CORS Configuration**: Strict allowed origins
+- **Environment Variables**: Sensitive data stored in environment variables
+- **Audit Logging**: Local audit logs for critical operations
 
 ---
 
 ## 📈 Performance Metrics
 
-### **System Performance**
-- **Analysis Speed**: < 2 seconds per page analysis
-- **Concurrent Users**: 1000+ simultaneous users supported
-- **Uptime**: 99.9% availability target
+### System Performance
+- **Analysis Speed**: ~2-5 seconds per URL analysis
+- **Concurrent Users**: 100+ simultaneous users supported
 - **Memory Usage**: Optimized for efficient operation
-- **Database Performance**: Optimized queries with proper indexing
+- **Database Performance**: Indexed collections for fast queries
 
-### **Accuracy Metrics**
-- **Pattern Detection**: 95%+ accuracy on known patterns
-- **False Positive Rate**: < 5% for minimal user interruption
-- **Trust Score Accuracy**: Within ±10 points of human assessment
-- **Coverage**: 50+ different dark pattern types detected
+### Detection Metrics
+- **Pattern Coverage**: 25+ distinct dark pattern types
+- **False Positive Rate**: Low false positives with ML enhancement
+- **Scraping Success Rate**: High success rate with Playwright fallback
 
 ---
 
 ## 🤝 Contributing
 
-### **How to Contribute**
-1. **Fork Repository**: Create your own copy on GitHub
-2. **Create Branch**: Use descriptive branch names
-3. **Make Changes**: Follow coding standards and security practices
-4. **Test Thoroughly**: Ensure all functionality works
-5. **Submit Pull Request**: Clear description of changes
-6. **Follow Guidelines**: Adhere to contribution standards
+We welcome contributions! Please follow these steps:
 
-### **Development Guidelines**
-- **Code Style**: Follow existing patterns and conventions
-- **Security**: Never commit sensitive data or credentials
-- **Testing**: Add tests for new features
-- **Documentation**: Update docs for new functionality
-- **Performance**: Ensure changes don't impact system performance
-
-### **Community**
-- **Code of Conduct**: Respectful, inclusive community
-- **Issue Reporting**: Use templates and provide detailed information
-- **Feature Requests**: Clear descriptions and use cases
-- **Security**: Responsible disclosure of vulnerabilities
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Make your changes
+4. Test thoroughly
+5. Commit your changes (`git commit -m 'Add some amazing feature'`)
+6. Push to the branch (`git push origin feature/amazing-feature`)
+7. Open a Pull Request
 
 ---
 
 ## 📜 License
 
-### **MIT License**
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-### **Permissions**
-- ✅ **Commercial Use**: Allowed
-- ✅ **Modification**: Allowed
-- ✅ **Distribution**: Allowed
-- ✅ **Private Use**: Allowed
-- ✅ **Sublicensing**: Allowed
-
-### **Attribution**
-Copyright © 2026 [Your Name/Organization](https://github.com/svishwas1224)
+This project is licensed under the MIT License - see the LICENSE file for details.
 
 ---
 
-## 🎉 Getting Started
+## 🎉 Acknowledgments
 
-### **🚀 Quick Links**
-- **[Live Demo](https://your-demo-site.com)**: See system in action
-- **[Chrome Extension](https://chrome.google.com/webstore/detail/your-extension-id)**: Install from Chrome Web Store
-- **[Documentation](documentation/)**: Comprehensive project documentation
-- **[GitHub Repository](https://github.com/svishwas1224/Aegis)**: Source code and development
-
-### **📞 Support**
-- **Issues**: [Report bugs or request features](https://github.com/svishwas1224/Aegis/issues)
-- **Discussions**: [Community support and discussions](https://github.com/svishwas1224/Aegis/discussions)
-- **Security**: [Report security issues responsibly](mailto:security@your-domain.com)
-
----
-
-## 🔮 Roadmap
-
-### **Current Version**: v2.0.0
-### **Planned Enhancements**
-- **Mobile Applications**: iOS and Android apps
-- **Advanced AI**: Custom model training and fine-tuning
-- **Browser Expansion**: Firefox, Safari, Edge support
-- **Enterprise Features**: Team management and advanced analytics
-- **API Platform**: Public API for third-party integration
-- **Research Integration**: Academic and industry partnerships
-
-### **Long-term Vision**
-Create a safer digital ecosystem where users are protected from manipulative design patterns and can make informed decisions about their digital interactions.
-
----
-
-## 🌟 Acknowledgments
-
-### **Core Technologies**
-- **Flask**: Web framework for backend API
-- **React**: User interface library for frontend
-- **MongoDB**: Database for data storage
-- **Chrome Extension API**: Browser extension capabilities
-- **Ollama**: Local AI model integration
-- **Lucide React**: Beautiful icon library
-
-### **Open Source Libraries**
-- **Recharts**: Data visualization components
-- **Axios**: HTTP client for API communication
-- **BeautifulSoup**: HTML parsing for analysis
-- **Natural Language Toolkit**: Text processing and analysis
-- **Computer Vision Libraries**: Visual pattern detection
-
----
-
-**Built with ❤️ for a safer digital world**
+### Core Technologies
+- **Flask**: Web framework
+- **React 19**: UI library
+- **Vite**: Build tool
+- **MongoDB**: Database
+- **Playwright**: Web scraping
+- **spaCy**: NLP
+- **Scikit-learn**: Machine learning
+- **Lucide React**: Icons
+- **Recharts**: Charts
 
 ---
 
 ## 📞 Contact
 
-- **Project Repository**: [https://github.com/svishwas1224/Aegis](https://github.com/svishwas1224/Aegis)
-- **Documentation**: [Comprehensive docs available](documentation/)
-- **Issues**: [Report bugs and features](https://github.com/svishwas1224/Aegis/issues)
-- **Discussions**: [Community support](https://github.com/svishwas1224/Aegis/discussions)
+- **Project Repository**: https://github.com/svishwas1224/newanti
+- **Issues**: https://github.com/svishwas1224/newanti/issues
 
 ---
 
-**Aegis Dark-Pattern Detector** - *Protecting Users, Empowering Choices, Creating Trust* 🛡️
+## 🔮 Future Scope
 
-*Advanced dark pattern detection system with real-time protection, comprehensive analysis, and privacy-first design.*
+- Browser extension for Chrome, Firefox, Edge
+- Multi-language support
+- Mobile applications
+- Advanced crawler trap detection
+- Real-time browser monitoring
+- More ML model improvements
+- Batch analysis
+- Public API access
+- Advanced reporting
+
+---
+
+Built with ❤️ for a safer digital world!
+
+**Aegis Dark-Pattern Detector** - Protecting Users, Empowering Choices, Creating Trust 🛡️

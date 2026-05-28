@@ -1,22 +1,92 @@
-# Ignore node_modules
-node_modules/
-frontend/node_modules/
+# ================================================
+# Aegis Dark-Pattern Detector .gitignore
+# Comprehensive privacy protection
+# ================================================
 
-# Ignore Python compiled files
-__pycache__/
-*.pyc
-
-# Ignore Environment Variables (CRITICAL)
+# -------------------------------
+# CRITICAL PRIVACY FILES
+# -------------------------------
 .env
 .env.local
-.env.production
 .env.development
+.env.production
+.env.*.local
 *.env
-
-# Ignore Local Databases & Backups (CRITICAL)
 user_backups.csv
+audit_purge.log
 
-# Ignore Local Test Outputs / Temporary files
+# -------------------------------
+# PYTHON
+# -------------------------------
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+venv/
+env/
+ENV/
+.venv
+*.pkl
+*.pickle
+
+# -------------------------------
+# NODE / FRONTEND
+# -------------------------------
+node_modules/
+frontend/node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+.next
+.nuxt
+.vuepress/dist
+.cache/
+.parcel-cache/
+.eslintcache
+.stylelintcache
+.vite
+*.tsbuildinfo
+
+# -------------------------------
+# IDE & EDITORS
+# -------------------------------
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# -------------------------------
+# DATABASE & DATA
+# -------------------------------
+dark_pattern_model.pkl
+training_data.tsv
+valid_domains.csv
+updated_categories.csv
+valid_domain/
+
+# -------------------------------
+# EXECUTABLES & BINARIES
+# -------------------------------
+ngrok.exe
+*.exe
+*.dll
+*.so
+*.dylib
+
+# -------------------------------
+# TEMP & DEBUG
+# -------------------------------
 test_out.txt
 test_ddgs.py
 test_domain_verifier.py
@@ -28,24 +98,52 @@ test_admin_backup.py
 test_backup_logic.py
 verify_url_logic.py
 clean_prefixes.py
+*.tmp
+*.temp
+*.log
+*.bak
 
-# Ignore security sensitive setup scripts
+# -------------------------------
+# SENSITIVE SCRIPTS
+# -------------------------------
 create_admin.py
 promote_admin.py
 bootstrap_mongo.py
 migrate_ids.py
 purge_database.py
 
-# Ignore executables and large data files
-ngrok.exe
-dark_pattern_model.pkl
-training_data.tsv
-valid_domains.csv
-updated_categories.csv
-valid_domain/
-
-# Ignore IDE configs
-.vscode/
-
-# Ignore Chrome Extension
+# -------------------------------
+# CHROME EXTENSION BUILDS
+# -------------------------------
 chrome_extension/
+aegis_extension/build/
+aegis_extension/dist/
+*.zip
+
+# -------------------------------
+# CONTINUE / AGENT CONFIGS
+# -------------------------------
+.continue/
+.python-version
+
+# -------------------------------
+# PROCURMENT & OLD DOCS
+# -------------------------------
+Procfile
+PRIVACY_SECURITY_CHECKLIST.md
+SECURITY_AUDIT_REPORT.md
+SECURITY_CLEANUP_TEMPLATE.md
+documentation/
+scripts/
+aegis_extension/
+
+# -------------------------------
+# FRONTEND BUILDS
+# -------------------------------
+# We keep frontend/dist in git for serving via Flask, but make sure to ignore any dev-only files if needed
+# frontend/dist/  # Uncomment this line if you don't want to commit built frontend files
+
+# -------------------------------
+# TRAE SANDBOX FILES
+# -------------------------------
+trae-sandbox*

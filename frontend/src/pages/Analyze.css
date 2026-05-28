@@ -277,6 +277,29 @@
     opacity: 0.5;
 }
 
+.input-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.input-header h4 {
+    font-size: 14px;
+    font-weight: 700;
+    opacity: 0.6;
+    margin: 0;
+    letter-spacing: 1px;
+}
+
+.real-time-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--neon-cyan);
+}
+
 .styled-textarea {
     width: 100%;
     min-height: 180px;
@@ -623,4 +646,90 @@
     font-weight: 600;
     margin: 0;
     line-height: 1.4;
+}
+
+/* Dark Pattern Warning Banner */
+.dark-pattern-warning {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    background: linear-gradient(135deg, rgba(255, 77, 77, 0.2), rgba(255, 204, 0, 0.1));
+    border: 2px solid rgba(255, 77, 77, 0.5);
+    border-radius: 20px;
+    padding: 24px;
+    margin-bottom: 30px;
+    animation: pulse-warning 2s infinite;
+}
+
+.dark-pattern-warning svg {
+    color: var(--neon-red);
+    flex-shrink: 0;
+}
+
+.dark-pattern-warning .warning-content h3 {
+    margin: 0 0 8px;
+    color: var(--neon-red);
+    font-size: 20px;
+    font-weight: 800;
+}
+
+.dark-pattern-warning .warning-content p {
+    margin: 0;
+    opacity: 0.85;
+    font-size: 16px;
+    line-height: 1.5;
+}
+
+@keyframes pulse-warning {
+    0%, 100% { box-shadow: 0 0 10px rgba(255, 77, 77, 0.3); }
+    50% { box-shadow: 0 0 20px rgba(255, 77, 77, 0.6); }
+}
+
+/* Enhanced Pattern Cards */
+.pattern-element-card {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.pattern-element-card.high-severity {
+    border-color: var(--neon-red);
+    background: rgba(255, 77, 77, 0.1);
+}
+
+.pattern-explanation {
+    font-size: 14px;
+    opacity: 0.8;
+    line-height: 1.5;
+    margin: 0;
+}
+
+.text-danger {
+    color: var(--neon-red);
+}
+
+.text-warning {
+    color: var(--neon-gold);
+}
+
+.remediation-box {
+    background: rgba(0, 255, 157, 0.08);
+    padding: 12px;
+    border-radius: 12px;
+    border: 1px solid rgba(0, 255, 157, 0.2);
+}
+
+.remediation-box label {
+    display: block;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    color: var(--neon-green);
+    margin-bottom: 6px;
+}
+
+.remediation-box p {
+    margin: 0;
+    font-size: 13px;
+    opacity: 0.9;
 }

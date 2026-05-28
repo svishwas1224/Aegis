@@ -20,13 +20,18 @@ class TriEngineAnalyzer:
         Perform comprehensive analysis using all three engines
         """
         all_findings = []
+        seen_findings = set()  # Track unique findings (only one per type!)
         engine_scores = {}
         engines_used = []
         
         # Linguistic Analysis
         if html_content:
             linguistic_result = self.linguistic_engine.analyze_text(html_content)
-            all_findings.extend(linguistic_result['findings'])
+            for finding in linguistic_result['findings']:
+                key = (finding['type'],)  # Deduplicate by pattern type
+                if key not in seen_findings:
+                    all_findings.append(finding)
+                    seen_findings.add(key)
             engine_scores['NLP'] = linguistic_result['trust_score']
             engines_used.append('NLP')
         
@@ -34,24 +39,33 @@ class TriEngineAnalyzer:
         visual_findings = []
         if screenshot_b64:
             visual_result = self.visual_engine.analyze_screenshot(screenshot_b64)
-            visual_findings.extend(visual_result['findings'])
+            for finding in visual_result['findings']:
+                key = (finding['type'],)  # Deduplicate by pattern type
+                if key not in seen_findings:
+                    all_findings.append(finding)
+                    seen_findings.add(key)
             engine_scores['VISUAL'] = visual_result['trust_score']
             engines_used.append('VISUAL')
         
         if html_content:
             visual_html_result = self.visual_engine.analyze_html_structure(html_content)
-            visual_findings.extend(visual_html_result['findings'])
+            for finding in visual_html_result['findings']:
+                key = (finding['type'],)  # Deduplicate by pattern type
+                if key not in seen_findings:
+                    all_findings.append(finding)
+                    seen_findings.add(key)
             if 'VISUAL' not in engine_scores:
                 engine_scores['VISUAL'] = visual_html_result['trust_score']
                 engines_used.append('VISUAL')
         
-        # Combine visual findings
-        all_findings.extend(visual_findings)
-        
         # Behavioral Analysis
         if har_data:
             behavioral_result = self.behavioral_engine.analyze_har(har_data)
-            all_findings.extend(behavioral_result['findings'])
+            for finding in behavioral_result['findings']:
+                key = (finding['type'],)  # Deduplicate by pattern type
+                if key not in seen_findings:
+                    all_findings.append(finding)
+                    seen_findings.add(key)
             engine_scores['BEHAVIORAL'] = behavioral_result['trust_score']
             engines_used.append('BEHAVIORAL')
         
@@ -74,8 +88,8 @@ class TriEngineAnalyzer:
             
             final_score = composite_score / total_weight if total_weight > 0 else 100
             
-            # Apply additional penalties for multiple findings
-            finding_penalty = min(len(all_findings) * 8, 40)  # 8 points per finding, max 40
+            # Apply additional penalties for unique findings (no duplicates!)
+            finding_penalty = min(len(all_findings) * 10, 50)  # 10 points per finding, max 50
             final_score = max(0, final_score - finding_penalty)
         else:
             final_score = 100

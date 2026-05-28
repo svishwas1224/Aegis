@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import API_BASE_URL from '../config';
@@ -11,8 +11,11 @@ const Analyze = () => {
     const [input, setInput] = useState('');
     const [inputType, setInputType] = useState('url');
     const [isAnalyzing, setIsAnalyzing] = useState(false);
+    const [isRealTimeAnalyzing, setIsRealTimeAnalyzing] = useState(false);
     const [result, setResult] = useState(null);
     const [controller, setController] = useState(null);
+    const debounceTimer = useRef(null);
+    const realTimeAbortController = useRef(null);
 
     useEffect(() => {
         const params = new URLSearchParams(location.search);
@@ -20,6 +23,57 @@ const Analyze = () => {
         if (mode === 'text') setInputType('text');
         else if (mode === 'url') setInputType('url');
     }, [location]);
+
+    const realTimeAnalyze = useCallback(async (value) => {
+        if (!value || !value.trim()) {
+            setIsRealTimeAnalyzing(false);
+            return;
+        }
+
+        // Cancel previous request if it exists
+        if (realTimeAbortController.current) {
+            realTimeAbortController.current.abort();
+        }
+
+        setIsRealTimeAnalyzing(true);
+        const abortController = new AbortController();
+        realTimeAbortController.current = abortController;
+
+        try {
+            const cleanInput = value.trim();
+            const endpoint = inputType === 'url' ? '/analyze' : '/analyze-text';
+            const payload = inputType === 'url' ? { url: cleanInput } : { text: cleanInput };
+
+            const res = await axios.post(`${API_BASE_URL}${endpoint}`, payload, {
+                signal: abortController.signal
+            });
+
+            setResult(res.data);
+        } catch (err) {
+            if (!axios.isCancel(err)) {
+                console.error("Real-time analysis error:", err);
+            }
+        } finally {
+            setIsRealTimeAnalyzing(false);
+        }
+    }, [inputType]);
+
+    const handleInputChange = (e) => {
+        const newInput = e.target.value;
+        setInput(newInput);
+
+        // Clear existing debounce timer
+        if (debounceTimer.current) {
+            clearTimeout(debounceTimer.current);
+        }
+
+        // Only do real-time analysis if input has enough content
+        if (newInput.trim().length > 3) {
+            debounceTimer.current = setTimeout(() => {
+                realTimeAnalyze(newInput);
+            }, 500); // 500ms debounce
+        }
+    };
 
     const handleAnalyze = async () => {
         if (!input || !input.trim()) return;
@@ -81,9 +135,12 @@ const Analyze = () => {
             /^live verification passed/i,
             /^domain is a verified/i,
         ];
+        // Keep findings that are either not in infoPatterns, or are clearly dark patterns
         return findings.filter(f => {
             const text = typeof f === 'string' ? f : (f.category || '');
-            return !infoPatterns.some(p => p.test(text));
+            const isInfo = infoPatterns.some(p => p.test(text));
+            const isDarkPattern = /urgency|scarcity|social proof|misdirection|forced action|cookie wall|subscription trap|false free trial|confirm shaming|hidden cost|bait and switch|trick question|pre selected|disguised ad|hard to cancel|privacy zuckering|sneaking|obstruction|general dark pattern/i.test(text);
+            return !isInfo || isDarkPattern;
         });
     };
 
@@ -149,10 +206,19 @@ const Analyze = () => {
                         </div>
 
                         <div className="analyzer-input-box">
+                            <div className="input-header">
+                                <h4>Input to Analyze</h4>
+                                {isRealTimeAnalyzing && (
+                                    <div className="real-time-indicator">
+                                        <RefreshCw className="spin-icon" size={14} />
+                                        <span>Analyzing in real-time...</span>
+                                    </div>
+                                )}
+                            </div>
                             <textarea 
                                 placeholder={inputType === 'url' ? "Enter website URL to scan..." : "Paste suspicious content or promotional text here..."}
                                 value={input}
-                                onChange={(e) => setInput(e.target.value)}
+                                onChange={handleInputChange}
                                 disabled={isAnalyzing}
                                 className="styled-textarea"
                             />
@@ -189,6 +255,17 @@ const Analyze = () => {
 
                 {result && !isAnalyzing && (
                     <div className="result-view fade-in">
+                        {/* Show warning banner if any dark patterns are found, even on safe sites */}
+                        {getProblemFindings(result.findings).length > 0 && (
+                            <div className="dark-pattern-warning">
+                                <ShieldAlert size={24} />
+                                <div className="warning-content">
+                                    <h3>⚠️ Dark Patterns Detected!</h3>
+                                    <p>This site uses {getProblemFindings(result.findings).length} manipulative design pattern(s) that may influence your decisions without your knowledge.</p>
+                                </div>
+                            </div>
+                        )}
+
                         <div className="result-grid">
                             <div className="glass-card result-summary-card">
                                 <div className="summary-header">
@@ -234,23 +311,33 @@ const Analyze = () => {
                             </div>
                         </div>
 
-                        {/* Only show findings section when there are actual problems */}
-                        {result.status !== 'SAFE' && getProblemFindings(result.findings).length > 0 && (
+                        {/* Show findings section when there are any problems */}
+                        {getProblemFindings(result.findings).length > 0 && (
                             <div className="patterns-section">
-                                <h3 className="section-title">Issues Found</h3>
+                                <h3 className="section-title">Dark Patterns Identified</h3>
                                 <div className="patterns-grid">
                                     {getProblemFindings(result.findings).map((f, i) => {
                                         const text = typeof f === 'string' ? f : f.category;
+                                        const isHighSeverity = f.severity && f.severity === 'HIGH';
                                         return (
-                                            <div key={i} className="glass-card pattern-element-card">
+                                            <div key={i} className={`glass-card pattern-element-card ${isHighSeverity ? 'high-severity' : ''}`}>
                                                 <div className="pattern-header">
-                                                    <ShieldAlert size={18} className="text-danger" />
+                                                    <ShieldAlert size={18} className={isHighSeverity ? 'text-danger' : 'text-warning'} />
                                                     <h4>{text}</h4>
                                                 </div>
+                                                {f.explanation && (
+                                                    <p className="pattern-explanation">{f.explanation}</p>
+                                                )}
                                                 {f.evidence && (
                                                     <div className="evidence-box">
                                                         <label>EVIDENCE</label>
-                                                        <code>"{f.evidence}"</code>
+                                                        <code>{typeof f.evidence === 'string' ? f.evidence : JSON.stringify(f.evidence)}</code>
+                                                    </div>
+                                                )}
+                                                {f.remediation && (
+                                                    <div className="remediation-box">
+                                                        <label>SUGGESTION</label>
+                                                        <p>{f.remediation}</p>
                                                     </div>
                                                 )}
                                             </div>

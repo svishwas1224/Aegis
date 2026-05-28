@@ -39,7 +39,7 @@ MODEL_NAME = os.getenv("MODEL_NAME", "qwen2.5:7b")
 # Configure folders for serving React
 dist_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'frontend', 'dist')
 app = Flask(__name__, static_folder=dist_folder)
-app.secret_key = os.getenv("APP_SESSION_KEY", "default-secret-key-keep-it-safe")
+app.secret_key = os.getenv("SECRET_KEY", os.getenv("APP_SESSION_KEY", "default-secret-key-keep-it-safe"))
 
 # Load datasets for the trust pipeline
 load_datasets()

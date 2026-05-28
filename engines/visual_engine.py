@@ -267,9 +267,14 @@ class VisualEngine:
         return min(contrast_ratio, 21.0)
     
     def analyze_html_structure(self, html_content: str) -> Dict[str, Any]:
-        """Analyze HTML structure for visual dark patterns"""
+        """Analyze HTML structure for visual dark patterns AND crawler traps!"""
         findings = []
+        seen = set()  # Deduplicate findings within visual engine
         total_penalty = 0
+        
+        # ------------------------------
+        # 1. DARK PATTERNS
+        # ------------------------------
         
         # Look for hidden elements in HTML
         hidden_patterns = [
@@ -301,32 +306,38 @@ class VisualEngine:
             import re
             matches = re.finditer(pattern, html_content, re.IGNORECASE)
             for match in matches:
-                findings.append({
-                    'engine': 'VISUAL',
-                    'type': 'hidden_element',
-                    'severity': 'HIGH',
-                    'bbox': [],
-                    'evidence': {'css_property': match.group()},
-                    'remediation': 'Remove hidden elements or make them visible',
-                    'explanation': 'CSS property used to hide content from users',
-                    'severity_score': 20
-                })
+                key = ('hidden_element', match.group())
+                if key not in seen:
+                    findings.append({
+                        'engine': 'VISUAL',
+                        'type': 'hidden_element',
+                        'severity': 'HIGH',
+                        'bbox': [],
+                        'evidence': {'css_property': match.group()},
+                        'remediation': 'Remove hidden elements or make them visible',
+                        'explanation': 'CSS property used to hide content from users',
+                        'severity_score': 20
+                    })
+                    seen.add(key)
         
         # Check for visual hierarchy misdirection
         for pattern in hierarchy_patterns:
             matches = re.finditer(pattern, html_content, re.IGNORECASE)
             for match in matches:
-                findings.append({
-                    'engine': 'VISUAL',
-                    'type': 'visual_hierarchy',
-                    'severity': 'MEDIUM',
-                    'bbox': [],
-                    'evidence': {'css_property': match.group()},
-                    'remediation': 'Ensure primary actions have more prominent styling than secondary actions',
-                    'explanation': 'Visual hierarchy misdirection detected - secondary action appears more important than primary',
-                    'severity_score': 15
-                })
-                total_penalty += 20
+                key = ('visual_hierarchy', match.group())
+                if key not in seen:
+                    findings.append({
+                        'engine': 'VISUAL',
+                        'type': 'visual_hierarchy',
+                        'severity': 'MEDIUM',
+                        'bbox': [],
+                        'evidence': {'css_property': match.group()},
+                        'remediation': 'Ensure primary actions have more prominent styling than secondary actions',
+                        'explanation': 'Visual hierarchy misdirection detected - secondary action appears more important than primary',
+                        'severity_score': 15
+                    })
+                    total_penalty += 20
+                    seen.add(key)
         
         # Look for preselected checkboxes
         preselected_patterns = [
@@ -340,16 +351,19 @@ class VisualEngine:
         for pattern in preselected_patterns:
             matches = re.finditer(pattern, html_content, re.IGNORECASE)
             for match in matches:
-                findings.append({
-                    'engine': 'VISUAL',
-                    'type': 'preselected',
-                    'severity': 'MEDIUM',
-                    'bbox': [],
-                    'evidence': {'html_element': match.group()},
-                    'remediation': 'Remove checked attribute from marketing checkboxes',
-                    'explanation': 'Pre-selected checkbox detected - user consent should be explicit',
-                    'severity_score': 15
-                })
+                key = ('preselected', match.group()[:100])  # Truncate long matches for key
+                if key not in seen:
+                    findings.append({
+                        'engine': 'VISUAL',
+                        'type': 'preselected',
+                        'severity': 'MEDIUM',
+                        'bbox': [],
+                        'evidence': {'html_element': match.group()},
+                        'remediation': 'Remove checked attribute from marketing checkboxes',
+                        'explanation': 'Pre-selected checkbox detected - user consent should be explicit',
+                        'severity_score': 15
+                    })
+                    seen.add(key)
         
         # Look for deceptive positioning
         deceptive_patterns = [
@@ -361,17 +375,79 @@ class VisualEngine:
         for pattern in deceptive_patterns:
             matches = re.finditer(pattern, html_content, re.IGNORECASE)
             for match in matches:
-                findings.append({
-                    'engine': 'VISUAL',
-                    'type': 'deceptive_positioning',
-                    'severity': 'MEDIUM',
-                    'bbox': [],
-                    'evidence': {'css_property': match.group()},
-                    'remediation': 'Use standard positioning for important elements',
-                    'explanation': 'CSS positioning that may deceive users',
-                    'severity_score': 12
-                })
-                total_penalty += 12
+                key = ('deceptive_positioning', match.group())
+                if key not in seen:
+                    findings.append({
+                        'engine': 'VISUAL',
+                        'type': 'deceptive_positioning',
+                        'severity': 'MEDIUM',
+                        'bbox': [],
+                        'evidence': {'css_property': match.group()},
+                        'remediation': 'Use standard positioning for important elements',
+                        'explanation': 'CSS positioning that may deceive users',
+                        'severity_score': 12
+                    })
+                    total_penalty += 12
+                    seen.add(key)
+        
+        # ------------------------------
+        # 2. CRAWLER TRAPS (NEW!)
+        # ------------------------------
+        
+        # Honeypot Links (hidden links only bots would follow!)
+        honeypot_patterns = [
+            r'<a[^>]*href=["\'][^"\']*["\'][^>]*style="[^"]*display\s*:\s*none',
+            r'<a[^>]*style="[^"]*display\s*:\s*none[^"]*"[^>]*href=["\']',
+            r'<a[^>]*class="[^"]*honeypot',
+            r'<a[^>]*class="[^"]*hidden-link',
+            r'<a[^>]*href=["\'][^"\']*["\'][^>]*width\s*:\s*1px',
+            r'<a[^>]*href=["\'][^"\']*["\'][^>]*height\s*:\s*1px',
+            r'<a[^>]*href=["\'][^"\']*["\'][^>]*opacity\s*:\s*0',
+            r'<input[^>]*type=["\']?hidden["\']?[^>]*name=["\']?[^"\']*["\']?',  # Honeypot form fields!
+            r'<input[^>]*class=["\']?[^"\']*honeypot',
+        ]
+        
+        for pattern in honeypot_patterns:
+            matches = re.finditer(pattern, html_content, re.IGNORECASE)
+            for match in matches:
+                key = ('honeypot_trap', match.group()[:100])
+                if key not in seen:
+                    findings.append({
+                        'engine': 'VISUAL',
+                        'type': 'honeypot_trap',
+                        'severity': 'MEDIUM',
+                        'bbox': [],
+                        'evidence': {'html_element': match.group()},
+                        'remediation': 'Avoid following hidden links or filling hidden fields',
+                        'explanation': 'Bot trap detected! Honeypot links/fields are intended to catch web crawlers',
+                        'severity_score': 15
+                    })
+                    seen.add(key)
+        
+        # Infinite URL Loop Traps (dynamic params creating endless variations!)
+        infinite_loop_patterns = [
+            r'<a[^>]*href=["\'][^"\']*\?(.*[&?])?(sort|page|order|filter)=',
+            r'calendar.*next.*month',
+            r'<a[^>]*href=["\'][^"\']*\?sessionid=',
+            r'<a[^>]*href=["\'][^"\']*\?sid=',
+        ]
+        
+        for pattern in infinite_loop_patterns:
+            matches = re.finditer(pattern, html_content, re.IGNORECASE)
+            for match in matches:
+                key = ('infinite_loop_trap', match.group()[:100])
+                if key not in seen:
+                    findings.append({
+                        'engine': 'VISUAL',
+                        'type': 'infinite_loop_trap',
+                        'severity': 'LOW',
+                        'bbox': [],
+                        'evidence': {'html_element': match.group()},
+                        'remediation': 'Set crawl limits or avoid following parameterized links',
+                        'explanation': 'Potential infinite loop trap detected! Parameterized links can create endless URL variations',
+                        'severity_score': 8
+                    })
+                    seen.add(key)
         
         base_score = 100
         final_score = max(0, base_score - total_penalty)

@@ -5,8 +5,8 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # Dataset paths
 # Fallback to the provided CSV names if they exist in the root directory
-VERIFIED_CSV = os.path.join(BASE_DIR, "data", "valid_domains.csv")
-FAKE_CSV = os.path.join(BASE_DIR, "data", "updated_categories.csv")
+VERIFIED_CSV = os.path.join(BASE_DIR, "data", "google_domains.csv")
+FAKE_CSV = os.path.join(BASE_DIR, "data", "url_test_data.csv")
 
 # Connectivity config
 REQUEST_TIMEOUT = 6

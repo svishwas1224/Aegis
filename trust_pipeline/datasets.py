@@ -3,6 +3,9 @@ import csv
 from trust_pipeline.config import VERIFIED_CSV, FAKE_CSV
 from trust_pipeline.utils import clean_surrounding_punctuation, extract_domain_from_anything, normalize_full_url
 
+# Import known official domains from verification.py
+from trust_pipeline.verification import ALL_OFFICIAL_DOMAINS
+
 # Global Datasets
 VERIFIED_DOMAINS = set()
 FAKE_DOMAINS = {}
@@ -12,7 +15,10 @@ def load_datasets():
     """Load both datasets into memory on startup."""
     global VERIFIED_DOMAINS, FAKE_DOMAINS, FAKE_URLS
     VERIFIED_DOMAINS = load_verified_domains(VERIFIED_CSV)
+    # Add all known official domains from verification.py
+    VERIFIED_DOMAINS.update(ALL_OFFICIAL_DOMAINS)
     FAKE_DOMAINS, FAKE_URLS = load_fake_dataset(FAKE_CSV)
+    print(f"[INFO] Total verified domains (including known brands): {len(VERIFIED_DOMAINS)}")
 
 def load_verified_domains(csv_path):
     verified = set()
@@ -52,18 +58,24 @@ def load_fake_dataset(csv_path):
         for row in reader:
             normalized_row = {k.strip().lower(): (v.strip() if v else "") for k, v in row.items()}
             
+            # Try domain columns first
             raw_domain = normalized_row.get("domain") or normalized_row.get("website") or normalized_row.get("site") or ""
-            raw_url = normalized_row.get("url") or normalized_row.get("exact_url") or ""
+            # Also check "input" column (for our url_test_data.csv)
+            raw_url = normalized_row.get("url") or normalized_row.get("exact_url") or normalized_row.get("input") or ""
             category = normalized_row.get("category") or normalized_row.get("type") or "suspicious"
 
             if raw_domain:
                 clean_domain = extract_domain_from_anything(raw_domain.lower())
-                if clean_domain:
+                if clean_domain and clean_domain not in VERIFIED_DOMAINS and clean_domain not in ALL_OFFICIAL_DOMAINS:
                     fake_domains[clean_domain] = category
             if raw_url:
                 normalized_exact_url = normalize_full_url(raw_url)
                 if normalized_exact_url:
                     fake_urls[normalized_exact_url] = category
+                # Also extract domain from the raw_url/fake_url
+                clean_domain_from_url = extract_domain_from_anything(raw_url.lower())
+                if clean_domain_from_url and clean_domain_from_url not in fake_domains and clean_domain_from_url not in VERIFIED_DOMAINS and clean_domain_from_url not in ALL_OFFICIAL_DOMAINS:
+                    fake_domains[clean_domain_from_url] = category
                     
     print(f"[INFO] Loaded {len(fake_domains)} fake domains and {len(fake_urls)} fake exact URLs.")
     return fake_domains, fake_urls

@@ -2,7 +2,12 @@ import re
 from trust_pipeline.utils import detect_input_type, extract_domain_from_anything, normalize_full_url
 from trust_pipeline.datasets import lookup_verified_domain, lookup_fake_domain
 from trust_pipeline.verification import internet_verify_official, analyze_url_rules
-from trust_pipeline.text_analyzer import analyze_text_input
+from engines.linguistic_engine import LinguisticEngine
+from engines.tri_engine_analyzer import TriEngineAnalyzer
+
+# Initialize the engines
+tri_engine = TriEngineAnalyzer()
+linguistic_engine = LinguisticEngine()
 
 
 def analyze_input(user_input):
@@ -26,49 +31,82 @@ def process_url_domain(original_input, input_type):
     domain = extract_domain_from_anything(original_input)
     findings = []
 
-    # ── Step 1: Structural rule analysis ────────────────────────────────────
-    rule_results = analyze_url_rules(domain, original_input)
-    findings.extend(rule_results["findings"])
-    structural_risk = rule_results["risk_score"]
-
-    # High structural risk — return immediately, no need to fetch
-    if structural_risk >= 50:
-        final_score = max(0, 30 - max(0, structural_risk - 50))
-        return _build_result(final_score, findings, rule_results, original_input)
-
-    # ── Step 2: Dataset lookup ───────────────────────────────────────────────
+    # --- Step 1: Dataset lookup FIRST (fast) ---
     is_verified = lookup_verified_domain(domain) if domain else False
     is_fake = lookup_fake_domain(domain) if domain else False
 
     if is_fake:
         findings.append("Domain found in global malicious blacklist.")
-        return _build_result(8, findings, rule_results, original_input)
+        return _build_result(8, findings, {"risk_score": 0, "findings": findings, "is_shortened": False}, original_input)
 
-    # ── Step 3: Live verification ────────────────────────────────────────────
+    if is_verified:
+        findings.append("Domain is a verified official website.")
+
+    # --- Step 2: Structural rule analysis ---
+    rule_results = analyze_url_rules(domain, original_input)
+    findings.extend(rule_results["findings"])
+    structural_risk = rule_results["risk_score"]
+
+    # High structural risk — return immediately, no need to fetch
+    if structural_risk >= 50 and not is_verified:
+        final_score = max(0, 30 - max(0, structural_risk - 50))
+        return _build_result(final_score, findings, rule_results, original_input)
+
+    # --- Step 3: Live verification and tri-engine analysis ---
     verify_data = internet_verify_official(original_input, domain=domain)
     live_findings = [f for f in verify_data["findings"] if f not in findings]
     findings.extend(live_findings)
 
     live_status = verify_data["status"]
     live_score = verify_data["trust_score"]
+    raw_html = verify_data.get("raw_html")
 
-    # ── Step 4: Combine signals ──────────────────────────────────────────────
-    # Structural risk always reduces the live score — more risk = bigger penalty
-    penalty = min(structural_risk, 40)
+    # Run tri-engine analysis if we have HTML content
+    tri_engine_score = None
+    if raw_html:
+        tri_engine_result = tri_engine.analyze_comprehensive(
+            url=original_input,
+            html_content=raw_html
+        )
+        tri_engine_score = tri_engine_result["trust_score"]
+        # Add tri-engine findings (convert to strings for consistency)
+        for finding in tri_engine_result.get("findings", []):
+            if isinstance(finding, dict):
+                findings.append(f"{finding.get('type', 'Issue')}: {finding.get('explanation', 'Detected')}")
+            else:
+                findings.append(str(finding))
 
-    if live_status == "SAFE":
-        final_score = max(live_score - penalty, 55)
-    elif live_status == "LIKELY_SAFE":
-        base = 80 if is_verified else live_score
-        final_score = max(base - penalty, 45)
-    elif live_status == "FAKE":
-        final_score = min(live_score, 15)
-    elif live_status == "SUSPICIOUS":
-        base = 60 if is_verified else live_score
-        final_score = max(base - penalty, 10)
-    else:  # UNKNOWN
-        base = 70 if is_verified else 45
-        final_score = max(base - penalty, 10)
+    # --- Step 4: Combine signals ---
+    # For verified sites, start at 98, but reduce by dark pattern findings
+    if is_verified:
+        base_score = 98
+        # For each dark pattern finding, reduce score by 5-10 points depending on severity
+        for finding in findings:
+            finding_lower = str(finding).lower()
+            if any(keyword in finding_lower for keyword in ["high", "critical", "auto renew", "cookie wall", "must accept", "credit card required"]):
+                base_score -= 10
+            else:
+                base_score -= 5
+        final_score = max(75, base_score)  # Keep verified sites at least SAFE
+    else:
+        # Original logic for non-verified sites
+        penalty = min(structural_risk, 40)
+        if live_status == "SAFE":
+            base_score = live_score - penalty
+        elif live_status == "LIKELY_SAFE":
+            base_score = (80 if is_verified else live_score) - penalty
+        elif live_status == "FAKE":
+            base_score = min(live_score, 15)
+        elif live_status == "SUSPICIOUS":
+            base_score = (60 if is_verified else live_score) - penalty
+        else:  # UNKNOWN
+            base_score = (70 if is_verified else 45) - penalty
+
+        # Blend with tri-engine score if available
+        if tri_engine_score is not None:
+            final_score = int((base_score * 0.6) + (tri_engine_score * 0.4))
+        else:
+            final_score = int(base_score)
 
     final_score = max(0, min(100, final_score))
     return _build_result(final_score, findings, rule_results, original_input)
@@ -111,13 +149,20 @@ def process_text(original_input):
     Handles pure text input. Also extracts any embedded URLs and
     runs URL analysis on them, combining both scores.
     """
-    text_result = analyze_text_input(original_input)
-    findings = list(text_result.get("findings", []))
+    # Use our new linguistic engine for text analysis
+    text_result = linguistic_engine.analyze_text(original_input)
+    findings = []
+    # Convert linguistic engine findings to a user-friendly format
+    for finding in text_result.get("findings", []):
+        if isinstance(finding, dict):
+            findings.append(f"{finding.get('type', 'Issue')}: {finding.get('explanation', 'Detected')}")
+        else:
+            findings.append(str(finding))
     text_score = text_result["trust_score"]
 
     # Extract any URLs embedded in the text and analyze them
     url_pattern = re.compile(
-        r'https?://[^\s]+|(?:[a-zA-Z0-9-]+\.)+(?:com|net|org|in|io|co|xyz|top|info|biz|gov|edu)[^\s]*',
+        r"https?://[^\s]+|(?:[a-zA-Z0-9-]+\.)+(?:com|net|org|in|io|co|xyz|top|info|biz|gov|edu)[^\s]*",
         re.IGNORECASE
     )
     embedded_urls = url_pattern.findall(original_input)
