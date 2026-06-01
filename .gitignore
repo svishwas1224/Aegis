@@ -144,6 +144,13 @@ aegis_extension/
 # frontend/dist/  # Uncomment this line if you don't want to commit built frontend files
 
 # -------------------------------
+# LOCAL LAUNCH SCRIPTS
+# -------------------------------
+*.bat
+start-project.bat
+start-full.bat
+
+# -------------------------------
 # TRAE SANDBOX FILES
 # -------------------------------
 trae-sandbox*

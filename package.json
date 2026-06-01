@@ -9,8 +9,8 @@
     "frontend-client": "cd frontend && npm run dev-client",
     "frontend-admin": "cd frontend && npm run dev-admin",
     "tunnel": "powershell -Command \"Start-Sleep -s 8; .\\ngrok.exe http 5000 --log stdout\"",
-    "dev-all": "npx concurrently -n BACKEND,CLIENT,ADMIN,TUNNEL -c magenta,cyan,yellow,green \"npm run backend\" \"npm run frontend-client\" \"npm run frontend-admin\" \"npm run tunnel\"",
-    "dev-client": "npm run dev-all",
+    "dev-all": "npx concurrently -n BACKEND,ADMIN,CLIENT,TUNNEL -c magenta,yellow,cyan,green \"npm run backend\" \"npm run frontend-admin\" \"npm run frontend-client\" \"npm run tunnel\"",
+    "dev-client": "npx concurrently -n BACKEND,CLIENT -c magenta,cyan --kill-others \"npm run backend\" \"npm run frontend-client\"",
     "dev-admin": "npx concurrently -n BACKEND,ADMIN -c magenta,yellow --kill-others \"npm run backend\" \"npm run frontend-admin\""
   },
   "devDependencies": {

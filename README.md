@@ -31,6 +31,7 @@
 ## 🛠️ Technology Stack
 
 ### Backend
+
 - **Python 3.10+**: Modern Python with advanced features
 - **Flask 3.0.2**: Lightweight, flexible web framework
 - **MongoDB Atlas**: Cloud-hosted NoSQL database
@@ -41,6 +42,7 @@
 - **Werkzeug Security**: Password hashing and security
 
 ### Frontend
+
 - **React 19.2.0**: Modern UI library
 - **Vite 7.3.1**: Fast build tool and development server
 - **Lucide React 0.577.0**: Beautiful, consistent icon library
@@ -55,6 +57,7 @@
 ## 🚀 Quick Start
 
 ### Prerequisites
+
 - Python 3.10+
 - Node.js 18+
 - npm or yarn
@@ -64,30 +67,33 @@
 ### Installation & Setup
 
 1. **Clone Repository**
+
    ```bash
    git clone https://github.com/svishwas1224/newanti.git
    cd newanti
    ```
 
 2. **Backend Setup**
+
    ```bash
    # Create virtual environment
    python -m venv venv
-   
+
    # Activate virtual environment
    # Windows:
    venv\Scripts\activate
    # macOS/Linux:
    source venv/bin/activate
-   
+
    # Install dependencies
    pip install -r requirements.txt
-   
+
    # Install Playwright browsers
    playwright install chromium
    ```
 
 3. **Frontend Setup**
+
    ```bash
    cd frontend
    npm install
@@ -95,6 +101,7 @@
 
 4. **Environment Configuration**
    Create a `.env` file in the project root:
+
    ```env
    MONGO_URI=mongodb+srv://<username>:<password>@cluster0.mongodb.net/
    SECRET_KEY=your-secret-key-here
@@ -106,29 +113,31 @@
    ```
 
 5. **Train ML Model** (if not already trained)
+
    ```bash
    python engines/train_ml_model.py
    ```
 
 6. **Run the Application**
+
    ```bash
    # Option 1: Run everything together (from project root)
    npm run dev-all
-   
+
    # Option 2: Run separately
    # Backend (from project root)
    python app.py
-   
-   # Frontend Client (from project root)
-   npm run frontend-client
-   
-   # Frontend Admin (from project root)
+
+   # Admin Dashboard (from project root)
    npm run frontend-admin
+
+   # Client Dashboard (from project root)
+   npm run frontend-client
    ```
 
 7. **Access the Application**
-   - Client Dashboard: http://localhost:5173
-   - Admin Dashboard: http://localhost:5174
+   - Admin Dashboard: http://localhost:5173
+   - Client Dashboard: http://localhost:5174
    - Backend API: http://localhost:5000
 
 ---
@@ -136,6 +145,7 @@
 ## 🎯 Core Capabilities
 
 ### Dark Pattern Detection
+
 - **Linguistic Patterns**: Confirm shaming, urgency, scarcity, manipulative language
 - **Visual Patterns**: Hidden elements, deceptive positioning, visual hierarchy manipulation
 - **Behavioral Patterns**: Forced actions, countdown manipulation, fake notifications
@@ -143,6 +153,7 @@
 - **Crawler Traps**: Honeypot links, infinite URL loops, hidden form fields
 
 ### User Features
+
 - **Text Analysis**: Analyze raw text for dark patterns
 - **URL Analysis**: Scrape and analyze live websites
 - **Real-Time Feedback**: Live analysis as you type
@@ -153,6 +164,7 @@
 - **Password Reset**: OTP-based password reset via email
 
 ### Admin Features
+
 - **Secure Admin Login**: Separate admin authentication
 - **User Management**: View all registered users
 - **Analytics Dashboard**: Comprehensive usage statistics
@@ -165,14 +177,15 @@
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                        React Frontends                        │
-│  ┌──────────────────────┐  ┌──────────────────────────────┐  │
-│  │ Client Dashboard     │  │ Admin Dashboard              │  │
-│  │ (localhost:5173)     │  │ (localhost:5174)             │  │
-│  └───────────┬──────────┘  └──────────────┬───────────────┘  │
-└──────────────┼─────────────────────────────┼──────────────────┘
-               │                             │
-               ▼                             ▼
+│                      React Frontends                        │
+│  ┌────────────────────────┐  ┌───────────────────────────┐  │
+│  │  Admin Dashboard       │  │  Client Dashboard         │  │
+│  │  (localhost:5173)      │  │  (localhost:5174)         │  │
+│  └─────────────┬──────────┘  └───────────────┬───────────┘  │
+└────────────────┼──────────────────────────────┼──────────────┘
+                 │                              │
+                 └───────────┬──────────────────┘
+                             ▼
 ┌─────────────────────────────────────────────────────────────┐
 │                      Flask Backend API                       │
 │  ┌───────────────────────────────────────────────────────┐  │
@@ -202,6 +215,7 @@
 ## 📖 Documentation
 
 ### API Endpoints
+
 - **Authentication**:
   - `POST /api/signup`: User registration
   - `POST /api/login`: User login
@@ -239,12 +253,14 @@
 ## 🔒 Security & Privacy
 
 ### Privacy
+
 - **No Personal Data Sharing**: No data shared with third parties
 - **Local Analysis Option**: All core analysis happens locally
 - **Hashed Passwords**: Passwords stored using Werkzeug's secure hashing
 - **Session Management**: Secure session cookies with SameSite=Lax
 
 ### Security
+
 - **Secure Authentication**: Password hashing and session management
 - **Input Validation**: Comprehensive validation and sanitization
 - **CORS Configuration**: Strict allowed origins
@@ -256,12 +272,14 @@
 ## 📈 Performance Metrics
 
 ### System Performance
+
 - **Analysis Speed**: ~2-5 seconds per URL analysis
 - **Concurrent Users**: 100+ simultaneous users supported
 - **Memory Usage**: Optimized for efficient operation
 - **Database Performance**: Indexed collections for fast queries
 
 ### Detection Metrics
+
 - **Pattern Coverage**: 25+ distinct dark pattern types
 - **False Positive Rate**: Low false positives with ML enhancement
 - **Scraping Success Rate**: High success rate with Playwright fallback
@@ -291,6 +309,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ## 🎉 Acknowledgments
 
 ### Core Technologies
+
 - **Flask**: Web framework
 - **React 19**: UI library
 - **Vite**: Build tool

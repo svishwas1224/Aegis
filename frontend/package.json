@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "dev-client": "vite --port 5173 --strictPort",
-    "dev-admin": "vite --port 5174 --strictPort",
+    "dev-client": "vite --port 5174 --strictPort",
+    "dev-admin": "vite --port 5173 --strictPort",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview"
