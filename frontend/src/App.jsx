@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import axios from 'axios';
 import API_BASE_URL from './config';
 import LandingPage from './pages/LandingPage';
@@ -18,6 +18,9 @@ axios.defaults.withCredentials = true;
 function App() {
   const isLoggedIn = !!Cookies.get('user');
   const isAdmin = !!Cookies.get('is_admin');
+  const port = window.location.port;
+  const isAdminPort = port === '5173';
+  const isClientPort = port === '5174';
 
   // Continually verify session state if we think we are logged in
   useEffect(() => {
@@ -31,7 +34,7 @@ function App() {
           // The backend says we are no longer valid (e.g. logged in on another device)
           Cookies.remove('user');
           Cookies.remove('is_admin');
-          if (window.location.pathname.startsWith('/admin')) {
+          if (window.location.pathname.startsWith('/admin') || isAdminPort) {
             window.location.href = '/admin/login';
           } else {
             window.location.href = '/login';
@@ -41,21 +44,34 @@ function App() {
     }, 60000); // Check once per minute to reduce terminal noise
 
     return () => clearInterval(interval);
-  }, [isLoggedIn, isAdmin]);
+  }, [isLoggedIn, isAdmin, isAdminPort]);
 
   return (
     <Router>
       <Routes>
-        <Route path="/" element={isLoggedIn ? <EnhancedClientHome /> : <LandingPage />} />
-        <Route path="/login" element={<AuthPage />} />
-        <Route path="/signup" element={<AuthPage />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/analyze" element={<Analyze />} />
-        <Route path="/admin/login" element={<AdminLogin />} />
-        <Route 
-          path="/admin" 
-          element={isAdmin ? <EnhancedAdminDashboard /> : <AdminLogin />} 
-        />
+        {/* Admin Port (5173) Routes */}
+        {isAdminPort ? (
+          <>
+            <Route path="/" element={<Navigate to="/admin" replace />} />
+            <Route path="/admin/login" element={<AdminLogin />} />
+            <Route 
+              path="/admin" 
+              element={isAdmin ? <EnhancedAdminDashboard /> : <AdminLogin />} 
+            />
+            <Route path="*" element={<Navigate to="/admin" replace />} />
+          </>
+        ) : (
+          <>
+            {/* Client Port (5174 or any other) Routes */}
+            <Route path="/" element={isLoggedIn ? <EnhancedClientHome /> : <LandingPage />} />
+            <Route path="/login" element={<AuthPage />} />
+            <Route path="/signup" element={<AuthPage />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/analyze" element={<Analyze />} />
+            <Route path="/admin/login" element={<Navigate to="http://localhost:5173/admin/login" replace />} />
+            <Route path="/admin" element={<Navigate to="http://localhost:5173/admin" replace />} />
+          </>
+        )}
       </Routes>
     </Router>
   );
