@@ -1,4 +1,4 @@
-# Aegis Dark-Pattern Detector
+# Dark Pattern Detection
 
 ## Advanced Dark Pattern Detection System with Tri-Engine Analysis
 
@@ -12,7 +12,7 @@
 
 ## 🎯 Overview
 
-**Aegis Dark-Pattern Detector** is a sophisticated, real-time dark pattern detection system that shields users from manipulative web design tactics. The system employs a powerful tri-engine architecture combining Natural Language Processing (NLP), Visual HTML/CSS analysis, and Behavioral HTTP Archive (HAR) analysis, augmented by a custom-trained scikit-learn machine learning model, to identify over 25 distinct types of dark patterns, including crawler traps.
+**Dark Pattern Detection** is a sophisticated, real-time dark pattern detection system that shields users from manipulative web design tactics. The system employs a powerful tri-engine architecture combining Natural Language Processing (NLP), Visual HTML/CSS analysis, and Behavioral HTTP Archive (HAR) analysis, augmented by a custom-trained scikit-learn machine learning model, to identify over 25 distinct types of dark patterns, including crawler traps.
 
 ### 🚀 Key Features
 
@@ -24,7 +24,7 @@
 - **Dual Dashboards**: Client dashboard and Admin dashboard for comprehensive management
 - **Real-Time Analysis**: Live feedback as you browse
 - **MongoDB Atlas Integration**: Cloud database for scan history and user data
-- **Ollama AI Integration**: Optional AI-powered insights (if configured)
+- **Ollama Integration**: Optional model insights (if configured)
 
 ---
 
@@ -62,7 +62,7 @@
 - Node.js 18+
 - npm or yarn
 - MongoDB Atlas account (or local MongoDB)
-- (Optional) Ollama running locally for AI insights
+- (Optional) Ollama running locally for model insights
 
 ### Installation & Setup
 
@@ -204,8 +204,8 @@
 ┌─────────────────────────────────────────────────────────────┐
 │                      MongoDB Databases                       │
 │  ┌──────────────────┐ ┌──────────────────┐ ┌───────────────┐ │
-│  │ dark-pattern-    │ │ dark-pattern-    │ │ aegis-pro     │ │
-│  │ users            │ │ admin            │ │               │ │
+│  │ dark-pattern-    │ │ dark-pattern-    │ │ dark-pattern- │ │
+│  │ users            │ │ admin            │ │ db            │ │
 │  └──────────────────┘ └──────────────────┘ └───────────────┘ │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -345,4 +345,4 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 Built with ❤️ for a safer digital world!
 
-**Aegis Dark-Pattern Detector** - Protecting Users, Empowering Choices, Creating Trust 🛡️
+**Dark Pattern Detection** - Protecting Users, Empowering Choices, Creating Trust 🛡️

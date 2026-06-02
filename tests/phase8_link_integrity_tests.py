@@ -1,5 +1,5 @@
 """
-Aegis Pro Phase 8: Link Destination Integrity Test Suite
+Dark Pattern Detection Phase 8: Link Destination Integrity Test Suite
 Testing redirect chains, bait-and-switch URLs, homograph attacks (TC-86 to TC-100)
 """
 

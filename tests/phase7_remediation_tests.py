@@ -1,5 +1,5 @@
 """
-Aegis Pro Phase 7: Remediation Features Test Suite
+Dark Pattern Detection Phase 7: Remediation Features Test Suite
 Testing Ghost-Writer mode, color override, auto-hide, timer neutralization (TC-76 to TC-85)
 """
 

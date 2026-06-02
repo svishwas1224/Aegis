@@ -1,5 +1,5 @@
 """
-Test suite for Aegis Pro Tri-Engine Architecture
+Test suite for Dark Pattern Detection Tri-Engine Architecture
 """
 
 import pytest
@@ -223,6 +223,15 @@ class TestIntegration:
         assert 'urgency' in pattern_types
         assert 'hidden_element' in pattern_types
         # Note: confirm_shaming may not be detected with current pattern matching
+
+    def test_amazon_in_is_verified_official_domain(self):
+        """Verify that amazon.in is recognized as a trusted official domain."""
+        from trust_pipeline.datasets import load_datasets, lookup_verified_domain
+        from trust_pipeline.verification import ALL_OFFICIAL_DOMAINS
+
+        load_datasets()
+        assert 'amazon.in' in ALL_OFFICIAL_DOMAINS
+        assert lookup_verified_domain('amazon.in') is True
     
     def test_remediation_suggestions(self):
         """Test that remediation suggestions are practical"""

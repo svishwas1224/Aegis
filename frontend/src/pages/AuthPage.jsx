@@ -55,12 +55,11 @@ const AuthPage = () => {
             try {
                 const res = await axios.get(`${API_BASE_URL}/dashboard`);
                 if (res.data.user) {
-                    console.log("User already logged in, redirecting...");
                     Cookies.set('user', res.data.user, { expires: 7, sameSite: 'Lax', path: '/' });
                     window.location.href = window.location.origin + '/';
                 }
-            } catch (err) {
-                console.log("No active session found.");
+            } catch {
+                // No active session found.
             }
         };
         checkLogin();
@@ -95,15 +94,12 @@ const AuthPage = () => {
     const handleLogin = async (e) => {
         e.preventDefault();
         try {
-            console.log("Attempting Login with:", loginData.email);
             const res = await axios.post(`${API_BASE_URL}/login`, loginData);
-            console.log("Login Success:", res.data);
             if (res.data.success) {
                 Cookies.set('user', res.data.user, { expires: 7, sameSite: 'Lax', path: '/' });
                 window.location.href = window.location.origin + '/';
             }
         } catch (err) {
-            console.error("Login Error:", err);
             const msg = err.response?.data?.message || 'Connection Error: Is the backend running?';
             setError(msg);
         }
@@ -293,9 +289,9 @@ const AuthPage = () => {
                         <form onSubmit={handleLogin}>
                             <Link to="/" className="brand-header" style={{ textDecoration: 'none' }}>
                                 <div className="brand-mark">D</div>
-                                <span className="brand-name">Pattern Detection</span>
+                                <span className="brand-name">Dark Pattern Detection</span>
                             </Link>
-                            <h2 className="form-title">{isMobile ? "Welcome back to <strong>Aegis</strong>" : <>Welcome <strong>Back.</strong></>}</h2>
+                            <h2 className="form-title">{isMobile ? "Welcome back to Dark Pattern Detection" : <>Welcome <strong>Back.</strong></>}</h2>
                             {error && <div className="error-msg error-visible">{error}</div>}
                             <div className="field-group">
                                 <input

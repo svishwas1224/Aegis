@@ -1,5 +1,5 @@
 """
-Aegis Pro Visual Engine
+Dark Pattern Detection Visual Engine
 Analyzes visual elements for dark patterns using computer vision
 """
 

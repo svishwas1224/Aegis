@@ -13,15 +13,18 @@ const Analyze = () => {
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [isRealTimeAnalyzing, setIsRealTimeAnalyzing] = useState(false);
     const [result, setResult] = useState(null);
-    const [controller, setController] = useState(null);
     const debounceTimer = useRef(null);
     const realTimeAbortController = useRef(null);
 
     useEffect(() => {
         const params = new URLSearchParams(location.search);
         const mode = params.get('mode');
+        const url = params.get('url');
         if (mode === 'text') setInputType('text');
         else if (mode === 'url') setInputType('url');
+        if (url) {
+            setInput(url);
+        }
     }, [location]);
 
     const realTimeAnalyze = useCallback(async (value) => {
@@ -44,14 +47,19 @@ const Analyze = () => {
             const endpoint = inputType === 'url' ? '/analyze' : '/analyze-text';
             const payload = inputType === 'url' ? { url: cleanInput } : { text: cleanInput };
 
-            const res = await axios.post(`${API_BASE_URL}${endpoint}`, payload, {
-                signal: abortController.signal
+            const res = await axios.post(`${API_BASE_URL}${endpoint}?t=${Date.now()}`, payload, {
+                signal: abortController.signal,
+                headers: {
+                    'Cache-Control': 'no-cache',
+                    'Pragma': 'no-cache',
+                    'Expires': '0'
+                }
             });
 
             setResult(res.data);
         } catch (err) {
             if (!axios.isCancel(err)) {
-                console.error("Real-time analysis error:", err);
+                // Real-time analysis failed; preserve current state.
             }
         } finally {
             setIsRealTimeAnalyzing(false);
@@ -62,13 +70,14 @@ const Analyze = () => {
         const newInput = e.target.value;
         setInput(newInput);
 
-        // Clear existing debounce timer
+        // Cancel any pending real-time analysis timer
         if (debounceTimer.current) {
             clearTimeout(debounceTimer.current);
         }
 
-        // Only do real-time analysis if input has enough content
-        if (newInput.trim().length > 3) {
+        // Only do real-time analysis for text inputs.
+        // URL scans should run only when the user explicitly clicks the button.
+        if (inputType === 'text' && newInput.trim().length > 3) {
             debounceTimer.current = setTimeout(() => {
                 realTimeAnalyze(newInput);
             }, 500); // 500ms debounce
@@ -82,27 +91,29 @@ const Analyze = () => {
 
         const cleanInput = input.trim();
         const abortController = new AbortController();
-        setController(abortController);
 
         try {
             const endpoint = inputType === 'url' ? '/analyze' : '/analyze-text';
             const payload = inputType === 'url' ? { url: cleanInput } : { text: cleanInput };
 
-            const res = await axios.post(`${API_BASE_URL}${endpoint}`, payload, {
-                signal: abortController.signal
+            const res = await axios.post(`${API_BASE_URL}${endpoint}?t=${Date.now()}`, payload, {
+                signal: abortController.signal,
+                headers: {
+                    'Cache-Control': 'no-cache',
+                    'Pragma': 'no-cache',
+                    'Expires': '0'
+                }
             });
 
-            // "Cinematic" delay for AI feeling
+            // "Cinematic" delay for improved UX
             setTimeout(() => {
                 setResult(res.data);
                 setIsAnalyzing(false);
-                setController(null);
             }, 1800);
         } catch (err) {
             if (axios.isCancel(err)) return;
             setIsAnalyzing(false);
             setResult({ success: false, error: "Connection interrupted. Please check your secure link." });
-            setController(null);
         }
     };
 
@@ -114,13 +125,19 @@ const Analyze = () => {
         setInput(samples[inputType]);
     };
 
-    const getStatusInfo = (status, score) => {
+    const getStatusInfo = (status) => {
         if (status === 'SAFE') return { label: 'Safe', color: '#00ff9d', desc: 'This content appears safe and trustworthy.', recommend: 'You can proceed normally.' };
         if (status === 'SUSPICIOUS') return { label: 'Suspicious', color: '#ffcc00', desc: 'Some elements may be misleading or manipulative.', recommend: 'Proceed with caution.' };
         return { label: 'High Risk', color: '#ff4d4d', desc: 'This content contains strong deceptive patterns.', recommend: 'Avoid interacting with this content.' };
     };
 
-    // Only findings that are actual problems — filter out informational/positive ones
+    // Only findings that are actual problems — filter out informational/positive ones and bot traps
+    const normalizeFindingText = (finding) => {
+        if (!finding) return '';
+        if (typeof finding === 'string') return finding;
+        return finding.type || finding.category || finding.explanation || JSON.stringify(finding);
+    };
+
     const getProblemFindings = (findings = []) => {
         const infoPatterns = [
             /^site responded with http 2/i,
@@ -135,13 +152,21 @@ const Analyze = () => {
             /^live verification passed/i,
             /^domain is a verified/i,
         ];
-        // Keep findings that are either not in infoPatterns, or are clearly dark patterns
-        return findings.filter(f => {
-            const text = typeof f === 'string' ? f : (f.category || '');
+        const botTrapPatterns = [
+            /honeypot/i,
+            /infinite loop/i,
+            /bot trap/i,
+        ];
+        // Keep findings that are either not in infoPatterns or botTrapPatterns, or are clearly dark patterns
+        const filtered = findings.filter(f => {
+            const text = normalizeFindingText(f);
             const isInfo = infoPatterns.some(p => p.test(text));
+            const isBotTrap = botTrapPatterns.some(p => p.test(text));
             const isDarkPattern = /urgency|scarcity|social proof|misdirection|forced action|cookie wall|subscription trap|false free trial|confirm shaming|hidden cost|bait and switch|trick question|pre selected|disguised ad|hard to cancel|privacy zuckering|sneaking|obstruction|general dark pattern/i.test(text);
-            return !isInfo || isDarkPattern;
+            return (!isInfo && !isBotTrap) || isDarkPattern;
         });
+
+        return filtered;
     };
 
     return (
@@ -161,9 +186,9 @@ const Analyze = () => {
             <nav className="analyze-nav fade-in">
                 <div className="nav-left">
                     <Link to="/dashboard" className="nav-logo">
-                        <div className="logo-box">A</div>
+                        <div className="logo-box">D</div>
                         <div className="logo-text">
-                            <span className="logo-main">AEGIS</span>
+                            <span className="logo-main">Dark Pattern Detection</span>
                             <span className="logo-sub">SECURE CONSOLE</span>
                         </div>
                     </Link>
@@ -179,10 +204,10 @@ const Analyze = () => {
                 {!result && !isAnalyzing && (
                     <div className="analyze-hero fade-in">
                         <div className="hero-badge">
-                            <Zap size={14} className="flash-icon" /> AI SECURITY ENGINE
+                            <Zap size={14} className="flash-icon" /> PATTERN DETECTION ENGINE
                         </div>
                         <h1>Dark Pattern Detection Console</h1>
-                        <p>Advanced neural analysis for deceptive design and manipulative content</p>
+                        <p>Advanced pattern analysis for deceptive design and manipulative content</p>
                     </div>
                 )}
 
@@ -249,7 +274,7 @@ const Analyze = () => {
                             <div className="ring delay-2"></div>
                         </div>
                         <h3>Security Pipeline Active</h3>
-                        <p>Scanning for neural manipulation markers...</p>
+                        <p>Scanning for manipulation markers...</p>
                     </div>
                 )}
 
@@ -317,24 +342,24 @@ const Analyze = () => {
                                 <h3 className="section-title">Dark Patterns Identified</h3>
                                 <div className="patterns-grid">
                                     {getProblemFindings(result.findings).map((f, i) => {
-                                        const text = typeof f === 'string' ? f : f.category;
-                                        const isHighSeverity = f.severity && f.severity === 'HIGH';
+                                        const text = normalizeFindingText(f);
+                                        const isHighSeverity = f && f.severity === 'HIGH';
                                         return (
                                             <div key={i} className={`glass-card pattern-element-card ${isHighSeverity ? 'high-severity' : ''}`}>
                                                 <div className="pattern-header">
                                                     <ShieldAlert size={18} className={isHighSeverity ? 'text-danger' : 'text-warning'} />
                                                     <h4>{text}</h4>
                                                 </div>
-                                                {f.explanation && (
+                                                {f && f.explanation && (
                                                     <p className="pattern-explanation">{f.explanation}</p>
                                                 )}
-                                                {f.evidence && (
+                                                {f && f.evidence && (
                                                     <div className="evidence-box">
                                                         <label>EVIDENCE</label>
                                                         <code>{typeof f.evidence === 'string' ? f.evidence : JSON.stringify(f.evidence)}</code>
                                                     </div>
                                                 )}
-                                                {f.remediation && (
+                                                {f && f.remediation && (
                                                     <div className="remediation-box">
                                                         <label>SUGGESTION</label>
                                                         <p>{f.remediation}</p>

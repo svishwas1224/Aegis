@@ -1,5 +1,5 @@
 """
-Aegis Pro Comprehensive Test Suite
+Dark Pattern Detection Comprehensive Test Suite
 Testing all 100 test cases across 8 phases
 """
 

@@ -1,18 +1,23 @@
 """
-Aegis Dark-Pattern Detector Tri-Engine Analyzer
+Dark Pattern Detection Tri-Engine Analyzer
 Coordinates NLP + Computer Vision + Network Forensics engines
 """
 
 from typing import Dict, List, Any
+from urllib.parse import urlparse
 from .linguistic_engine import LinguisticEngine
 from .visual_engine import VisualEngine
 from .behavioral_engine import BehavioralEngine
+from trust_pipeline.datasets import load_datasets, lookup_verified_domain
+from trust_pipeline.utils import extract_domain_from_anything
 
 class TriEngineAnalyzer:
     def __init__(self):
         self.linguistic_engine = LinguisticEngine()
         self.visual_engine = VisualEngine()
         self.behavioral_engine = BehavioralEngine()
+        # Load datasets once on init
+        load_datasets()
     
     def analyze_comprehensive(self, url: str, html_content: str = None, 
                             screenshot_b64: str = None, har_data: Dict = None) -> Dict[str, Any]:
@@ -23,6 +28,10 @@ class TriEngineAnalyzer:
         seen_findings = set()  # Track unique findings (only one per type!)
         engine_scores = {}
         engines_used = []
+        
+        # Extract domain and check if verified
+        domain = extract_domain_from_anything(url)
+        is_verified = lookup_verified_domain(domain) if domain else False
         
         # Linguistic Analysis
         if html_content:
@@ -36,7 +45,6 @@ class TriEngineAnalyzer:
             engines_used.append('NLP')
         
         # Visual Analysis
-        visual_findings = []
         if screenshot_b64:
             visual_result = self.visual_engine.analyze_screenshot(screenshot_b64)
             for finding in visual_result['findings']:
@@ -69,30 +77,61 @@ class TriEngineAnalyzer:
             engine_scores['BEHAVIORAL'] = behavioral_result['trust_score']
             engines_used.append('BEHAVIORAL')
         
-        # Calculate composite trust score with stricter penalties
-        if engine_scores:
-            # Weight the engines (can be adjusted based on importance)
-            weights = {
-                'NLP': 0.4,
-                'VISUAL': 0.35,
-                'BEHAVIORAL': 0.25
-            }
+        # Calculate final score, prioritizing verified domains
+        if is_verified:
+            # For verified domains, start high and only penalize for actual dark patterns
+            base_score = 98
+            dark_pattern_keywords = [
+                "urgency", "scarcity", "social proof", "misdirection", 
+                "forced action", "cookie wall", "subscription trap", 
+                "false free trial", "confirm shaming", "hidden cost", 
+                "bait and switch", "trick question", "pre selected", 
+                "disguised ad", "hard to cancel", "privacy zuckering", 
+                "sneaking", "obstruction", "general dark pattern", 
+                "high", "critical", "auto renew", "must accept", 
+                "credit card required"
+            ]
+            bot_trap_keywords = ["honeypot", "infinite loop", "bot trap"]
             
-            composite_score = 0
-            total_weight = 0
+            # Filter out bot traps and count actual dark patterns
+            actual_dark_patterns = []
+            for finding in all_findings:
+                text = finding.get('type', '') + ' ' + finding.get('explanation', '')
+                text_lower = text.lower()
+                is_bot_trap = any(keyword in text_lower for keyword in bot_trap_keywords)
+                is_dark_pattern = any(keyword in text_lower for keyword in dark_pattern_keywords)
+                if not is_bot_trap and is_dark_pattern:
+                    actual_dark_patterns.append(finding)
             
-            for engine, score in engine_scores.items():
-                weight = weights.get(engine, 0.33)
-                composite_score += score * weight
-                total_weight += weight
-            
-            final_score = composite_score / total_weight if total_weight > 0 else 100
-            
-            # Apply additional penalties for unique findings (no duplicates!)
-            finding_penalty = min(len(all_findings) * 10, 50)  # 10 points per finding, max 50
-            final_score = max(0, final_score - finding_penalty)
+            # Penalty only for actual dark patterns
+            penalty = min(len(actual_dark_patterns) * 10, 50)
+            final_score = max(75, base_score - penalty)
+            all_findings = [f for f in all_findings if not any(kw in (f.get('type', '') + ' ' + f.get('explanation', '')).lower() for kw in bot_trap_keywords)]
         else:
-            final_score = 100
+            # Original logic for non-verified sites
+            if engine_scores:
+                # Weight the engines (can be adjusted based on importance)
+                weights = {
+                    'NLP': 0.4,
+                    'VISUAL': 0.35,
+                    'BEHAVIORAL': 0.25
+                }
+                
+                composite_score = 0
+                total_weight = 0
+                
+                for engine, score in engine_scores.items():
+                    weight = weights.get(engine, 0.33)
+                    composite_score += score * weight
+                    total_weight += weight
+                
+                final_score = composite_score / total_weight if total_weight > 0 else 100
+                
+                # Apply additional penalties for unique findings (no duplicates!)
+                finding_penalty = min(len(all_findings) * 10, 50)  # 10 points per finding, max 50
+                final_score = max(0, final_score - finding_penalty)
+            else:
+                final_score = 100
         
         # Determine risk level
         if final_score >= 75:

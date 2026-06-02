@@ -62,7 +62,7 @@ const WebScraper = () => {
             } else {
                 setStatus(`Analysis Error: ${res.data.error || "Failed analysis."}`);
             }
-        } catch (err) {
+        } catch {
             setStatus("Error connecting to analyzer.");
         } finally {
             setIsScanning(false);

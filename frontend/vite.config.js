@@ -1,10 +1,14 @@
+/* global process */
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+
+const isClientDev = process.env.npm_lifecycle_event === 'dev-client';
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
   server: {
+    open: isClientDev ? '/dashboard' : false,
     proxy: {
       // Forward all /api requests to the Flask backend.
       // This makes cookies same-origin so Flask sessions work correctly in dev.

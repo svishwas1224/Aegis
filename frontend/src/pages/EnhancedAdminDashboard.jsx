@@ -9,12 +9,12 @@ import {
     Trash2, Mail, Phone, MapPin, Clock, CheckCircle, XCircle,
     AlertTriangle, Globe, Lock, Unlock, Ban, UserPlus,
     FileText, Archive, Cpu, HardDrive, Wifi, Server,
-    Monitor, Smartphone, Tablet, Laptop, Terminal
+    Monitor, Smartphone, Tablet, Laptop, Terminal, ShieldCheck
 } from 'lucide-react';
 import { 
     LineChart, Line, XAxis, YAxis, CartesianGrid, 
     Tooltip, ResponsiveContainer, AreaChart, Area,
-    BarChart, Bar, PieChart as RechartsPieChart, Cell,
+    BarChart, Bar, PieChart as RechartsPieChart, Pie, Cell,
     Legend
 } from 'recharts';
 import axios from 'axios';
@@ -34,9 +34,8 @@ const EnhancedAdminDashboard = () => {
     const [scans, setScans] = useState([]);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('overview');
-    const [adminName, setAdminName] = useState('Admin');
+    const [adminName] = useState('Admin');
     const [searchQuery, setSearchQuery] = useState('');
-    const [selectedUser, setSelectedUser] = useState(null);
     const [showNotifications, setShowNotifications] = useState(false);
     const [showUserMenu, setShowUserMenu] = useState(false);
     const [showSettings, setShowSettings] = useState(false);
@@ -47,7 +46,7 @@ const EnhancedAdminDashboard = () => {
     ]);
 
     useEffect(() => {
-        document.title = 'Aegis Pro Admin Dashboard';
+        document.title = 'Dark Pattern Detection Admin Dashboard';
         fetchDashboardData();
         
         const interval = setInterval(fetchDashboardData, 30000); // Update every 30 seconds
@@ -65,8 +64,8 @@ const EnhancedAdminDashboard = () => {
             setStats(statsRes.data);
             setUsers(usersRes.data);
             setScans(scansRes.data);
-        } catch (error) {
-            console.error('Error fetching dashboard data:', error);
+        } catch {
+            // Dashboard data could not be loaded. The page will update when the next fetch completes.
         } finally {
             setLoading(false);
         }
@@ -76,7 +75,7 @@ const EnhancedAdminDashboard = () => {
         try {
             await axios.get(`${API_BASE_URL}/admin/logout`);
             window.location.href = '/admin/login';
-        } catch (error) {
+        } catch {
             window.location.href = '/admin/login';
         }
     };
@@ -150,7 +149,7 @@ const EnhancedAdminDashboard = () => {
                                 <div className="brand-pulse"></div>
                             </div>
                             <div className="brand-text">
-                                <span className="brand-name">Aegis Pro</span>
+                                <span className="brand-name">Dark Pattern Detection</span>
                                 <span className="brand-role">Admin</span>
                             </div>
                         </Link>
@@ -179,11 +178,11 @@ const EnhancedAdminDashboard = () => {
                             Scans
                         </button>
                         <button 
-                            className={`nav-btn ${activeTab === 'analytics' ? 'active' : ''}`}
-                            onClick={() => setActiveTab('analytics')}
+                            className={`nav-btn ${activeTab === 'projects' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('projects')}
                         >
-                            <BarChart3 size={18} />
-                            Analytics
+                            <FileText size={18} />
+                            Projects
                         </button>
                     </nav>
 
@@ -387,7 +386,7 @@ const EnhancedAdminDashboard = () => {
                                     <ResponsiveContainer width="100%" height={300}>
                                         <AreaChart data={getChartData()}>
                                             <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                                            <XAxis dataKey="time" stroke="#9ca3af" />
+                                            <XAxis dataKey="name" stroke="#9ca3af" />
                                             <YAxis stroke="#9ca3af" />
                                             <Tooltip 
                                                 contentStyle={{ 
@@ -601,10 +600,10 @@ const EnhancedAdminDashboard = () => {
                     </div>
                 )}
 
-                {activeTab === 'analytics' && (
+                {activeTab === 'projects' && (
                     <div className="analytics-content">
                         <div className="content-header">
-                            <h2>Advanced Analytics</h2>
+                            <h2>Project Overview</h2>
                             <div className="header-actions">
                                 <div className="date-range">
                                     <Calendar size={16} />
@@ -612,54 +611,54 @@ const EnhancedAdminDashboard = () => {
                                 </div>
                                 <button className="primary-btn">
                                     <Download size={16} />
-                                    Export Report
+                                    Export Snapshot
                                 </button>
                             </div>
                         </div>
 
                         <div className="analytics-grid">
                             <div className="analytics-card">
-                                <h3>User Engagement</h3>
+                                <h3>Project Activity</h3>
                                 <ResponsiveContainer width="100%" height={250}>
                                     <BarChart data={stats.weekly_stats}>
                                         <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                                        <XAxis dataKey="time" stroke="#9ca3af" />
+                                        <XAxis dataKey="name" stroke="#9ca3af" />
                                         <YAxis stroke="#9ca3af" />
                                         <Tooltip />
-                                        <Bar dataKey="users" fill="#3b82f6" />
+                                        <Bar dataKey="scans" fill="#3b82f6" />
                                     </BarChart>
                                 </ResponsiveContainer>
                             </div>
 
                             <div className="analytics-card">
-                                <h3>System Performance</h3>
+                                <h3>Project Health</h3>
                                 <div className="performance-metrics">
                                     <div className="metric">
-                                        <div className="metric-label">CPU Usage</div>
-                                        <div className="metric-value">45%</div>
+                                        <div className="metric-label">Total Jobs</div>
+                                        <div className="metric-value">{stats.total_scans}</div>
                                         <div className="metric-bar">
-                                            <div className="metric-fill" style={{ width: '45%' }}></div>
+                                            <div className="metric-fill" style={{ width: `${Math.min(100, stats.total_scans || 0) % 100}%` }}></div>
                                         </div>
                                     </div>
                                     <div className="metric">
-                                        <div className="metric-label">Memory Usage</div>
-                                        <div className="metric-value">62%</div>
+                                        <div className="metric-label">Contributors</div>
+                                        <div className="metric-value">{stats.total_users}</div>
                                         <div className="metric-bar">
-                                            <div className="metric-fill" style={{ width: '62%' }}></div>
+                                            <div className="metric-fill" style={{ width: `${Math.min(100, stats.total_users || 0) % 100}%` }}></div>
                                         </div>
                                     </div>
                                     <div className="metric">
-                                        <div className="metric-label">Disk Usage</div>
-                                        <div className="metric-value">38%</div>
+                                        <div className="metric-label">Successful Runs</div>
+                                        <div className="metric-value">{stats.total_safe}</div>
                                         <div className="metric-bar">
-                                            <div className="metric-fill" style={{ width: '38%' }}></div>
+                                            <div className="metric-fill" style={{ width: `${Math.min(100, stats.total_safe || 0) % 100}%` }}></div>
                                         </div>
                                     </div>
                                     <div className="metric">
-                                        <div className="metric-label">Network I/O</div>
-                                        <div className="metric-value">71%</div>
+                                        <div className="metric-label">Failed Runs</div>
+                                        <div className="metric-value">{stats.total_threats}</div>
                                         <div className="metric-bar">
-                                            <div className="metric-fill" style={{ width: '71%' }}></div>
+                                            <div className="metric-fill" style={{ width: `${Math.min(100, stats.total_threats || 0) % 100}%` }}></div>
                                         </div>
                                     </div>
                                 </div>

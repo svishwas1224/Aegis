@@ -1,5 +1,5 @@
 """
-Aegis Pro Phase 4: Privacy & Data Protection Test Suite
+Dark Pattern Detection Phase 4: Privacy & Data Protection Test Suite
 Testing consent patterns, data collection, privacy policy analysis (TC-41 to TC-50)
 """
 

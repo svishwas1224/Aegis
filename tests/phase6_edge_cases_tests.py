@@ -1,5 +1,5 @@
 """
-Aegis Pro Phase 6: Edge Cases & Pro Scenarios Test Suite
+Dark Pattern Detection Phase 6: Edge Cases & Pro Scenarios Test Suite
 Testing Shadow DOM, Canvas UI, iframe injection, Unicode spoofing (TC-61 to TC-75)
 """
 

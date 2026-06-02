@@ -1,5 +1,5 @@
 """
-Aegis Pro Behavioral Engine
+Dark Pattern Detection Behavioral Engine
 Analyzes network behavior and user interactions for dark patterns
 """
 

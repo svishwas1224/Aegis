@@ -1,5 +1,5 @@
 """
-Aegis Pro Behavioral & Network Forensics Test Suite
+Dark Pattern Detection Behavioral & Network Forensics Test Suite
 Phase 3: Testing the "lies" in the code (TC-31 to TC-40)
 """
 

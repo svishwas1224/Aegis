@@ -14,7 +14,7 @@ const AdminLogin = () => {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [loading, setLoading] = useState(false);
-    const [showPassword, setShowPassword] = useState(false);
+    const [showPassword] = useState(false);
 
     useEffect(() => {
         document.title = 'Dark Pattern Admin';
@@ -68,10 +68,10 @@ const AdminLogin = () => {
 
                     {/* Left Split: Cyber Security Image */}
                     <div className="login-image-side">
-                        <img src="/neuroshield-bg.png" alt="Aegis Core" className="bg-image-split" />
+                        <img src="/neuroshield-bg.png" alt="Dark Pattern Detection" className="bg-image-split" />
                         <div className="image-overlay-content">
-                            <h2>{isRegister ? 'New Enrollment' : 'Aegis Core'}</h2>
-                            <p>Administrative Security Gateway to protect your internal systems and monitor aegis grid integrity.</p>
+                            <h2>{isRegister ? 'New Enrollment' : 'Dark Pattern Detection Admin'}</h2>
+                            <p>Administrative dashboard for Dark Pattern Detection, monitoring user safety and platform integrity.</p>
                         </div>
                     </div>
 

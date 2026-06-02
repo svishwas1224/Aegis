@@ -26,7 +26,7 @@ from urllib3.exceptions import InsecureRequestWarning
 warnings.filterwarnings('ignore', category=InsecureRequestWarning)
 from bson import ObjectId # Essential for database object manipulation
 
-# Import Aegis Dark-Pattern Detector engines
+# Import Dark Pattern Detection engines
 from engines.tri_engine_analyzer import TriEngineAnalyzer
 
 
@@ -35,16 +35,18 @@ load_dotenv()
 MONGO_URI = os.getenv("MONGO_URI")
 OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434/api/generate")
 MODEL_NAME = os.getenv("MODEL_NAME", "qwen2.5:7b")
+DEBUG_MODE = os.getenv("FLASK_DEBUG", "false").lower() in ("1", "true", "yes")
 
 # Configure folders for serving React
 dist_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'frontend', 'dist')
 app = Flask(__name__, static_folder=dist_folder)
+app.debug = DEBUG_MODE
 app.secret_key = os.getenv("SECRET_KEY", os.getenv("APP_SESSION_KEY", "default-secret-key-keep-it-safe"))
 
 # Load datasets for the trust pipeline
 load_datasets()
 
-# Initialize Aegis Dark-Pattern Detector Tri-Engine Analyzer
+# Initialize Dark Pattern Detection Tri-Engine Analyzer
 tri_engine = TriEngineAnalyzer()
 
 
@@ -107,46 +109,46 @@ if MONGO_URI:
         # Preserve legacy user data while isolating new administrative records
         user_db = client["dark-pattern-users"] 
         admin_db = client["dark-pattern-admin"]
-        aegis_db = client["aegis-pro"]
+        dark_pattern_db = client["dark-pattern-db"]
         
         users_col = user_db["users"]       # Standard users (18+ entries found)
         admins_col = admin_db["admins"]     # Secure administrative archive
         analyses_col = user_db["analyses"] # Shared analytics namespace
         
-        # Aegis Pro collections
-        scans_col = aegis_db["scans"]
-        sites_col = aegis_db["sites"]
+        # Dark Pattern Detection collections
+        scans_col = dark_pattern_db["scans"]
+        sites_col = dark_pattern_db["sites"]
         
         client.admin.command('ping')
-        print("Database Connection: ONLINE (MongoDB Atlas)", flush=True)
+        app.logger.info("Database Connection: ONLINE (MongoDB Atlas)")
 
         # ARCHIVE PERSISTENCE VERIFICATION: Track record state across restarts
         total_scans_detected = analyses_col.count_documents({})
         total_operatives_detected = users_col.count_documents({})
-        print(f"AEGIS ARCHIVE SYNC: {total_scans_detected} neural scans and {total_operatives_detected} operatives synchronized.", flush=True)
+        app.logger.info(f"Dark Pattern Detection archive sync: {total_scans_detected} scans and {total_operatives_detected} operatives.")
         
         if total_scans_detected == 0:
-            print("LOG WARNING: No historical scan data detected in the synchronized collection.", flush=True)
+            app.logger.warning("No historical scan data detected in the synchronized collection.")
 
     except Exception as e:
-        print(f"DATABASE ERROR: {e}", flush=True)
+        app.logger.error(f"Database error: {e}")
 else:
-    print("DATABASE WARNING: MONGO_URI not found. Database features will be disabled until configured.", flush=True)
+    app.logger.warning("MONGO_URI not found. Database features will be disabled until configured.")
 
 def close_db_connection():
     global client
     if 'client' in globals() and client:
-        print("Closing Database Connection...", flush=True)
+        app.logger.info("Closing database connection.")
         client.close()
 
 atexit.register(close_db_connection)
 
 @app.before_request
 def log_session():
-    # Helpful for debugging why login might "not work"
-    print(f"--- Request: {request.method} {request.path} ---", flush=True)
-    print(f"Session State: {'LOGGED IN as ' + session['user'] if 'user' in session else 'GUEST'}", flush=True)
-    print(f"Origin: {request.headers.get('Origin')}", flush=True)
+    if DEBUG_MODE:
+        app.logger.debug(f"Request: {request.method} {request.path}")
+        app.logger.debug(f"Session state: {'LOGGED IN as ' + session['user'] if 'user' in session else 'GUEST'}")
+        app.logger.debug(f"Origin: {request.headers.get('Origin')}")
 
 def login_required(f):
     @wraps(f)
@@ -177,11 +179,11 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# Aegis Pro Tri-Engine Analysis Endpoint
+# Dark Pattern Detection Tri-Engine Analysis Endpoint
 @app.route('/api/tri-engine-analyze', methods=['POST'])
 @cross_origin()
 def tri_engine_analyze():
-    """Aegis Pro comprehensive analysis using tri-engine architecture"""
+    """Dark Pattern Detection comprehensive analysis using tri-engine architecture"""
     try:
         data = request.get_json()
         url = data.get('url')
@@ -193,19 +195,22 @@ def tri_engine_analyze():
             return jsonify({'success': False, 'error': 'URL is required'}), 400
         
         # Perform comprehensive analysis
+        analysis_start = time.perf_counter()
         analysis = tri_engine.analyze_comprehensive(
             url=url,
             html_content=html_content,
             screenshot_b64=screenshot_b64,
             har_data=har_data
         )
+        analysis_end = time.perf_counter()
+        analysis['analysis_ms'] = int((analysis_end - analysis_start) * 1000)
+
+        # Add optional Ollama model insights if available
+        model_insights = get_model_insights(analysis)
+        if model_insights:
+            analysis['model_insights'] = model_insights
         
-        # Add AI-powered insights if Ollama is available
-        ai_insights = get_ai_insights(analysis)
-        if ai_insights:
-            analysis['ai_insights'] = ai_insights
-        
-        # Store in Aegis Pro database
+        # Store in Dark Pattern Detection database
         if scans_col is not None:
             scan_record = {
                 'url': url,
@@ -236,11 +241,11 @@ def tri_engine_analyze():
         })
         
     except Exception as e:
-        print(f"Tri-engine analysis error: {e}")
+        app.logger.error(f"Tri-engine analysis error: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
-def get_ai_insights(analysis):
-    """Get AI-powered insights using Ollama"""
+def get_model_insights(analysis):
+    """Get model insights using Ollama"""
     try:
         import requests
         
@@ -298,7 +303,8 @@ def get_ai_insights(analysis):
                 }
         
     except Exception as e:
-        print(f"AI insights error: {e}")
+        if DEBUG_MODE:
+            app.logger.warning(f"Model insights error: {e}")
         return None
 
 @app.route('/api/signup', methods=['GET', 'POST'])
@@ -408,7 +414,8 @@ def send_otp_email(recipient_email, otp_code):
     sender_password = os.getenv("SMTP_APP_PASSWORD")
     
     if not sender_email or not sender_password:
-        print("DEBUG ERROR: SMTP credentials (SMTP_EMAIL, SMTP_APP_PASSWORD) not configured in .env")
+        if DEBUG_MODE:
+            app.logger.warning("SMTP credentials (SMTP_EMAIL, SMTP_APP_PASSWORD) are not configured in .env")
         return
 
     msg = MIMEMultipart()
@@ -423,19 +430,22 @@ def send_otp_email(recipient_email, otp_code):
     def send_task():
         context = ssl.create_default_context()
         try:
-            print(f"DEBUG thread: Connecting to smtp.gmail.com:587 for {recipient_email}")
+            if DEBUG_MODE:
+                app.logger.info(f"Connecting to smtp.gmail.com:587 for {recipient_email}")
             with smtplib.SMTP('smtp.gmail.com', 587, timeout=15) as server:
                 server.starttls(context=context)
                 server.login(sender_email, sender_password)
                 server.send_message(msg)
-            print(f"DEBUG thread: Email OTP successfully sent to {recipient_email}")
+            if DEBUG_MODE:
+                app.logger.info(f"Email OTP successfully sent to {recipient_email}")
         except Exception as e:
-            print(f"DEBUG thread ERROR: Failed to send to {recipient_email}. Reason: {str(e)}")
+            app.logger.warning(f"Failed to send OTP to {recipient_email}: {e}")
 
     # Launch thread
     thread = threading.Thread(target=send_task)
     thread.start()
-    print(f"DEBUG: Background thread started for {recipient_email}")
+    if DEBUG_MODE:
+        app.logger.info(f"Background thread started for {recipient_email}")
 
 # OTP Storage in MongoDB (removes in-memory dictionary that breaks on multi-worker servers)
 
@@ -589,12 +599,13 @@ def log_audit_event(event_type, details):
         log_entry = f"[{timestamp}] AUDIT_{event_type.upper()}: {details}\n"
         with open("audit_purge.log", "a", encoding='utf-8') as f:
             f.write(log_entry)
-        print(f"CRITICAL AUDIT: {log_entry.strip()}", flush=True)
-    except: pass
+        app.logger.info(f"Critical audit event logged: {event_type}")
+    except Exception:
+        app.logger.warning("Failed to write critical audit event.")
 
 def log_analysis(user, data):
     if analyses_col is None:
-        print(f"DATABASE WARNING: Skipping log for {user} (analyses_col is None)")
+        app.logger.warning(f"Skipping analysis log for {user} because analyses_col is unavailable.")
         return
 
     # Map classification to strictly "Safe" or "Unsafe"
@@ -625,9 +636,9 @@ def log_analysis(user, data):
     }
     try:
         analyses_col.insert_one(analysis_entry)
-        print(f"Logged analysis to MongoDB for user: {user} as {safety_status}")
+        app.logger.info(f"Logged analysis to MongoDB for user: {user} as {safety_status}")
     except Exception as e:
-        print(f"Error logging to MongoDB: {e}")
+        app.logger.warning(f"Error logging to MongoDB: {e}")
 
 
 
@@ -1033,7 +1044,12 @@ def admin_stats():
         hour_ago = now - datetime.timedelta(hours=i)
         hour_str = hour_ago.strftime('%Y-%m-%d %H')
         count = analyses_col.count_documents({'timestamp': {'$regex': f'^{hour_str}'}})
-        hourly_stats.append({'name': hour_ago.strftime('%H:00'), 'scans': count})
+        # distinct users that performed scans in this hour
+        try:
+            users_count = len(analyses_col.distinct('username', {'timestamp': {'$regex': f'^{hour_str}'}}))
+        except Exception:
+            users_count = 0
+        hourly_stats.append({'name': hour_ago.strftime('%H:00'), 'scans': count, 'users': users_count})
         
     # 2. Weekly Stats (for 'W') - Last 7 days
     weekly_stats = []
@@ -1041,7 +1057,11 @@ def admin_stats():
         day = now - datetime.timedelta(days=i)
         date_str = day.strftime('%Y-%m-%d')
         count = analyses_col.count_documents({'timestamp': {'$regex': f'^{date_str}'}})
-        weekly_stats.append({'name': day.strftime('%d %b'), 'scans': count})
+        try:
+            users_count = len(analyses_col.distinct('username', {'timestamp': {'$regex': f'^{date_str}'}}))
+        except Exception:
+            users_count = 0
+        weekly_stats.append({'name': day.strftime('%d %b'), 'scans': count, 'users': users_count})
         
     # 3. Monthly Stats (for 'M') - Last 30 days (sampled every 2-3 days for clarity if many)
     # We'll just provide all 30 days for now
@@ -1050,7 +1070,11 @@ def admin_stats():
         day = now - datetime.timedelta(days=i)
         date_str = day.strftime('%Y-%m-%d')
         count = analyses_col.count_documents({'timestamp': {'$regex': f'^{date_str}'}})
-        monthly_stats.append({'name': day.strftime('%d %b'), 'scans': count})
+        try:
+            users_count = len(analyses_col.distinct('username', {'timestamp': {'$regex': f'^{date_str}'}}))
+        except Exception:
+            users_count = 0
+        monthly_stats.append({'name': day.strftime('%d %b'), 'scans': count, 'users': users_count})
 
     total_safe = analyses_col.count_documents({'safety_status': 'Safe'})
     total_threats = analyses_col.count_documents({'safety_status': {'$ne': 'Safe'}})
@@ -1275,18 +1299,7 @@ def delete_scan(scan_id):
     except:
         return jsonify({'success': False, 'message': 'Invalid ID'}), 400
 
-    if analyses_col is None:
-        return jsonify({'success': False, 'message': 'Database offline'}), 503
-    try:
-        from bson.objectid import ObjectId
-        analyses_col.delete_one({'_id': ObjectId(scan_id)})
-        return jsonify({'success': True, 'message': 'Log entry purged.'})
-    except:
-        return jsonify({'success': False, 'message': 'Invalid ID'}), 400
-
 if __name__ == '__main__':
-    print("\n" + "="*50, flush=True)
-    print("  BACKEND SERVER IS RUNNING", flush=True)
-    print("  Local Access: http://localhost:5000", flush=True)
-    print("="*50 + "\n", flush=True)
-    app.run(debug=True, port=5000)
+    app.logger.info("Backend server is running")
+    app.logger.info("Local Access: http://localhost:5000")
+    app.run(debug=DEBUG_MODE, port=5000)

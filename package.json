@@ -1,7 +1,7 @@
 {
   "name": "dark-pattern-detection",
   "version": "2.0.0",
-  "description": "Aegis Dark-Pattern Detector - Integrated Dark Pattern Detection System",
+  "description": "Dark Pattern Detection - Integrated Dark Pattern Detection System",
     "scripts": {
     "prestart": "powershell -Command \"Get-Process python, ngrok -ErrorAction SilentlyContinue | Stop-Process -Force; exit 0\"",
     "start": "npm run dev-all",

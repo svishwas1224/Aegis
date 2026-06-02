@@ -1,5 +1,5 @@
 """
-Aegis Pro Tri-Engine Architecture
+Dark Pattern Detection Tri-Engine Architecture
 Implements NLP + Computer Vision + Network Forensics engines
 """
 

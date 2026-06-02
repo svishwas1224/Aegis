@@ -77,16 +77,31 @@ def process_url_domain(original_input, input_type):
                 findings.append(str(finding))
 
     # --- Step 4: Combine signals ---
-    # For verified sites, start at 98, but reduce by dark pattern findings
+    # For verified sites, start at 98, but reduce by dark pattern findings (ignore bot traps, etc.)
     if is_verified:
         base_score = 98
         # For each dark pattern finding, reduce score by 5-10 points depending on severity
+        dark_pattern_keywords = [
+            "urgency", "scarcity", "social proof", "misdirection", "forced action", 
+            "cookie wall", "subscription trap", "false free trial", "confirm shaming", 
+            "hidden cost", "bait and switch", "trick question", "pre selected", 
+            "disguised ad", "hard to cancel", "privacy zuckering", "sneaking", 
+            "obstruction", "general dark pattern", "high", "critical", "auto renew", 
+            "must accept", "credit card required"
+        ]
+        bot_trap_keywords = ["honeypot", "infinite loop", "bot trap"]
+        
         for finding in findings:
             finding_lower = str(finding).lower()
-            if any(keyword in finding_lower for keyword in ["high", "critical", "auto renew", "cookie wall", "must accept", "credit card required"]):
-                base_score -= 10
-            else:
-                base_score -= 5
+            # Skip bot trap findings for verified sites
+            if any(keyword in finding_lower for keyword in bot_trap_keywords):
+                continue
+            # Only penalize for actual dark patterns
+            if any(keyword in finding_lower for keyword in dark_pattern_keywords):
+                if any(keyword in finding_lower for keyword in ["high", "critical", "auto renew", "cookie wall", "must accept", "credit card required"]):
+                    base_score -= 10
+                else:
+                    base_score -= 5
         final_score = max(75, base_score)  # Keep verified sites at least SAFE
     else:
         # Original logic for non-verified sites

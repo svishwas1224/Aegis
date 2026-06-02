@@ -1,5 +1,5 @@
 """
-Aegis Pro Phase 5: System Integration & Performance Test Suite
+Dark Pattern Detection Phase 5: System Integration & Performance Test Suite
 Testing API performance, MongoDB integration, React dashboard (TC-51 to TC-60)
 """
 
@@ -26,7 +26,7 @@ class TestPhase5_SystemIntegration:
         test_data = {
             "url": "https://example.com/test-page",
             "html_content": "<p>Limited time offer! Only 2 items left! No thanks, I hate saving money!</p>",
-            "user_agent": "AegisPro-Test/1.0"
+            "user_agent": "DarkPatternDetection-Test/1.0"
         }
         
         start_time = time.time()
@@ -59,7 +59,7 @@ class TestPhase5_SystemIntegration:
         test_data = {
             "url": "https://example.com/mongodb-test",
             "html_content": "<p>Test content for MongoDB integration</p>",
-            "user_agent": "AegisPro-Test/1.0"
+            "user_agent": "DarkPatternDetection-Test/1.0"
         }
         
         try:
@@ -98,7 +98,7 @@ class TestPhase5_SystemIntegration:
             test_requests.append({
                 "url": f"https://example.com/concurrent-test-{i}",
                 "html_content": f"<p>Concurrent test {i}: Limited time offer!</p>",
-                "user_agent": "AegisPro-Concurrent/1.0"
+                "user_agent": "DarkPatternDetection-Concurrent/1.0"
             })
         
         try:
@@ -176,7 +176,7 @@ class TestPhase5_SystemIntegration:
             test_data = {
                 "url": f"https://example.com/memory-test-{i}",
                 "html_content": f"<p>Memory test {i}: " + "Large content " * 100 + "</p>",
-                "user_agent": "AegisPro-Memory/1.0"
+"user_agent": "DarkPatternDetection-Memory/1.0"
             }
             
             # Test local analysis (without backend)
@@ -237,7 +237,7 @@ class TestPhase5_SystemIntegration:
         test_data = {
             "url": "https://example.com/db-performance-test",
             "html_content": "<p>Database performance test content</p>",
-            "user_agent": "AegisPro-DB/1.0"
+            "user_agent": "DarkPatternDetection-DB/1.0"
         }
         
         try:

@@ -1,5 +1,5 @@
 """
-Aegis Pro Linguistic Engine
+Dark Pattern Detection Linguistic Engine
 Analyzes text content for dark patterns using NLP techniques
 """
 

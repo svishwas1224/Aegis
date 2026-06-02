@@ -1,3 +1,3 @@
 """
-Aegis Pro Test Suite
+Dark Pattern Detection Test Suite
 """

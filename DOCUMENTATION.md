@@ -1,14 +1,14 @@
-# Aegis Dark Pattern Detector - Complete Documentation
+# Dark Pattern Detection - Complete Documentation
 
 ---
 
 ## 1. Abstract / Executive Summary
 
-Aegis is a sophisticated, real-time dark pattern detection web application engineered to shield users from the pervasive manipulative web design tactics known as "dark patterns"—design choices that intentionally mislead, trick, or coerce users into taking actions they would not otherwise voluntarily perform, such as subscribing to unwanted newsletters, making unintended purchases, or sharing sensitive personal information without informed consent.
+Dark Pattern Detection is a sophisticated, real-time dark pattern detection web application engineered to shield users from the pervasive manipulative web design tactics known as "dark patterns"—design choices that intentionally mislead, trick, or coerce users into taking actions they would not otherwise voluntarily perform, such as subscribing to unwanted newsletters, making unintended purchases, or sharing sensitive personal information without informed consent.
 
 This system employs a powerful tri-engine architecture that combines Natural Language Processing (NLP), Visual HTML/CSS analysis, and Behavioral analysis of HTTP Archive (HAR) data, augmented by a custom-trained scikit-learn machine learning model, to identify over 25 distinct types of dark patterns, including urgency, scarcity, hidden costs, drip pricing, subscription traps, and specialized crawler traps designed to confuse or block ethical web scrapers.
 
-Aegis is built as a full-stack web application with a modern, intuitive React-based frontend, a robust Flask-based backend, and integration with MongoDB Atlas for data persistence, providing users with clear, actionable insights, intuitive visualizations of findings, and easy-to-understand trust scores (0-100), and actionable remediation suggestions for every identified issues, all designed to empower users to make informed decisions while navigating the web.
+Dark Pattern Detection is built as a full-stack web application with a modern, intuitive React-based frontend, a robust Flask-based backend, and integration with MongoDB Atlas for data persistence, providing users with clear, actionable insights, intuitive visualizations of findings, and easy-to-understand trust scores (0-100), and actionable remediation suggestions for every identified issues, all designed to empower users to make informed decisions while navigating the web.
 
 ---
 
@@ -56,13 +56,13 @@ Dark patterns, a term first coined by user experience (UX) designer Harry Brignu
 
 The impact of dark patterns is significant: they can lead to financial losses (unintended purchases, unwanted subscription renewals), privacy violations (unauthorized data sharing), and erode trust in online services, and create a general sense of frustration and powerlessness among users.
 
-The Aegis Dark Pattern Detector aims to directly address this pressing problem by providing users with a powerful, easy-to-use tool to identify and understand these manipulative patterns in real time, helping to empower them to make more informed decisions while browsing the web, and by providing tools to help ethical web scrapers avoid common crawler traps.
+The Dark Pattern Detection aims to directly address this pressing problem by providing users with a powerful, easy-to-use tool to identify and understand these manipulative patterns in real time, helping to empower them to make more informed decisions while browsing the web, and by providing tools to help ethical web scrapers avoid common crawler traps.
 
 ---
 
 ## 4. Project Overview
 
-Aegis is a complete full-stack web application, consisting of several key integrated components:
+Dark Pattern Detection is a complete full-stack web application, consisting of several key integrated components:
 
 1. **Frontend**: A modern, responsive user interface built on React 18 and Vite, which provides users with an intuitive, real-time analysis input field for entering URLs or text snippets, and displays scan results with clear, easy-to-understand visualizations, trust scores, risk levels, and actionable remediation suggestions for each identified dark pattern.
 2. **Backend**: A robust, scalable Flask-based RESTful API application that handles all the core analysis, scraping, and business logic of the system
@@ -118,7 +118,7 @@ These gaps leave internet users vulnerable to manipulative web design tactics, c
 
 ### Scope (What the System Does)
 
-The Aegis Dark Pattern Detector includes the following features and capabilities:
+The Dark Pattern Detection includes the following features and capabilities:
 
 1. **Text Input Analysis**: Accepts raw text input (e.g., product descriptions, terms of service, email content) and analyzes it for dark patterns.
 2. **URL Analysis**: Accepts web URLs and scrapes the live page content to analyze it for dark patterns.
@@ -137,7 +137,7 @@ The Aegis Dark Pattern Detector includes the following features and capabilities
 
 ### Limitations (What the System Does NOT Do)
 
-While Aegis is a powerful and comprehensive tool, it has several important limitations:
+While Dark Pattern Detection is a powerful and comprehensive tool, it has several important limitations:
 
 1. **Synthetic Training Data**: The machine learning model is currently trained on synthetically generated data rather than real-world labeled dark pattern examples, which may slightly limit its accuracy for some edge cases.
 2. **English-Only Support**: The system currently only supports English-language text and websites; multi-language support is planned for future versions.
@@ -145,7 +145,7 @@ While Aegis is a powerful and comprehensive tool, it has several important limit
 4. **SPA Limitations**: Some highly dynamic Single-Page Applications with complex user interactions (e.g., infinite scroll, multi-step forms) may require manual intervention or additional configuration to analyze fully.
 5. **No Browser Extension (Yet)**: While future versions may include a browser extension, the current version is only available as a standalone web application.
 6. **No User Accounts (Current Version)**: The current version does not include a user account system, although scan history is stored in the database.
-7. **Legal/Compliance Disclaimer**: Aegis is a detection tool only and does not provide legal advice or guarantee compliance with any specific regulations or laws.
+7. **Legal/Compliance Disclaimer**: Dark Pattern Detection is a detection tool only and does not provide legal advice or guarantee compliance with any specific regulations or laws.
 
 ---
 
@@ -185,7 +185,7 @@ Previous approaches to dark pattern detection have included:
 
 ## 9. Existing Systems
 
-While several tools and initiatives related to dark patterns exist, none offer the comprehensive, real-time, tri-engine approach of Aegis. Here is a detailed comparison of existing systems:
+While several tools and initiatives related to dark patterns exist, none offer the comprehensive, real-time, tri-engine approach of Dark Pattern Detection. Here is a detailed comparison of existing systems:
 
 ### 1. Dark Patterns.org
 
@@ -224,7 +224,7 @@ While several tools and initiatives related to dark patterns exist, none offer t
 
 ## 10. Technological Review
 
-This section provides a detailed review of all technologies used in the Aegis system:
+This section provides a detailed review of all technologies used in the Dark Pattern Detection system:
 
 ### Frontend Technologies
 
@@ -291,7 +291,7 @@ This section provides a detailed review of all technologies used in the Aegis sy
 
 ## 11. System Requirements
 
-This section outlines both functional (what the system does) and non-functional (how well it does it) requirements for the Aegis Dark Pattern Detector.
+This section outlines both functional (what the system does) and non-functional (how well it does it) requirements for the Dark Pattern Detection.
 
 ---
 
@@ -532,7 +532,7 @@ The system follows a client-server architecture with a clear separation between 
          │ Input URL/Text
          ▼
 ┌─────────────────────────────────────┐
-│     Aegis Dark Pattern Detector     │
+│     Dark Pattern Detection     │
 │         (Whole System)              │
 └────────┬────────────────────────────┘
          │ Output Results
@@ -557,7 +557,7 @@ The system follows a client-server architecture with a clear separation between 
 
 ## 20. Database Design (ER Diagram, Schema)
 
-Aegis uses MongoDB Atlas, a NoSQL document database, for data persistence.
+Dark Pattern Detection uses MongoDB Atlas, a NoSQL document database, for data persistence.
 
 ### Collection Schema (Scan Results):
 
@@ -717,7 +717,7 @@ All 13 test cases are passing (100% success rate):
 
 ### Conclusion
 
-Aegis successfully achieves all objectives of providing comprehensive real-time dark pattern detection with tri-engine analysis and ML integration!
+Dark Pattern Detection successfully achieves all objectives of providing comprehensive real-time dark pattern detection with tri-engine analysis and ML integration!
 
 ### Future Scope
 

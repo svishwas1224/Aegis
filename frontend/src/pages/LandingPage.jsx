@@ -17,7 +17,7 @@ const LandingPage = () => {
             <nav className="navbar">
                 <Link to="/" className="brand" style={{ textDecoration: 'none' }}>
                     <div className="brand-mark">D</div>
-                    <span className="brand-name">Pattern Detection</span>
+                    <span className="brand-name">Dark Pattern Detection</span>
                 </Link>
                 <div className="nav-links">
                     {isLoggedIn ? (
@@ -42,7 +42,7 @@ const LandingPage = () => {
                         </h1>
                         <p className="hero-subtitle">
                             Your unified protection hub. Monitor history, verify links,
-                            and analyze suspicious content with the Aegis detection engine.
+                            and analyze suspicious content with the Dark Pattern Detection engine.
                         </p>
                         <div className="hero-btns">
                             <Link to="/analyze" className="btn-auth btn-hero">Start Analysis</Link>
@@ -59,7 +59,7 @@ const LandingPage = () => {
                             <div className="option-card">
                                 <MessageSquare size={28} className="option-icon" />
                                 <h4>NLP Pattern Check</h4>
-                                <p>Our AI analyzes text for manipulative linguistic patterns used by scammers.</p>
+                                <p>Our engine analyzes text for manipulative linguistic patterns used by scammers.</p>
                                 <Link to="/analyze" className="option-link">Paste Text</Link>
                             </div>
                             <div className="option-card">
@@ -76,7 +76,7 @@ const LandingPage = () => {
                             Detect Dark <em>Patterns</em><br />With Precision.
                         </h1>
                         <p className="hero-subtitle">
-                            The most advanced AI-driven scanner for deceptive design.
+                            The most advanced scanner for deceptive design.
                             Protect yourself from manipulative interfaces and data extraction.
                         </p>
                         <Link to="/login" className="btn-auth btn-hero">Start Security Scan</Link>
@@ -90,7 +90,7 @@ const LandingPage = () => {
                             <div className="feature-card">
                                 <Zap size={24} className="feature-icon" />
                                 <h4>Real-time Detection</h4>
-                                <p>AI-powered heuristics catch phishing, impersonation, and scam patterns.</p>
+                                <p>Smart heuristics catch phishing, impersonation, and scam patterns.</p>
                             </div>
                             <div className="feature-card">
                                 <BarChart2 size={24} className="feature-icon" />
